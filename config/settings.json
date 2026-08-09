@@ -1,0 +1,59 @@
+{
+  "cache_max_age_hours": 24,
+  "rate_limit_min_sec": 3.0,
+  "rate_limit_max_sec": 8.0,
+  "fetch_yahoo_mag7": false,
+  "fetch_nasdaq_mag7": true,
+  "mag7": ["AAPL", "MSFT", "NVDA", "AMZN", "GOOGL", "META", "TSLA"],
+  "index_proxy": "SPY",
+  "fred_series": {
+    "hy_oas": "BAMLH0A0HYM2",
+    "yield_curve_2s10s": "T10Y2Y",
+    "fed_funds": "DFF",
+    "buffett_indicator": "DDDM01USA156NWDB",
+    "household_equity_pct": "BOGZ1FL153064486Q",
+    "gdp": "GDP"
+  },
+  "thresholds": {
+    "cape": {"median": 16.0, "dotcom": 44.0, "extreme": 40.0},
+    "buffett_pct": {"fire": 200.0, "extreme": 230.0},
+    "household_equity_pct": {"dotcom": 38.7, "extreme": 45.0},
+    "mag7_weight_pct": {"elevated": 25.0, "extreme": 33.0},
+    "hy_oas_bp": {"complacent": 350.0, "stress": 500.0},
+    "recession_prob_pct": {"amber": 25.0, "red": 40.0},
+    "margin_debt_yoy_pct": {"elevated": 20.0, "extreme": 40.0}
+  },
+  "weights": {
+    "fragility": {
+      "cape": 0.22,
+      "buffett": 0.18,
+      "household_equity": 0.15,
+      "concentration": 0.20,
+      "margin_debt": 0.25
+    },
+    "trigger": {
+      "hy_oas": 0.35,
+      "yield_curve": 0.15,
+      "recession_prob": 0.20,
+      "fed_path": 0.15,
+      "ai_earnings_risk": 0.15
+    },
+    "composite": {
+      "fragility": 0.55,
+      "trigger": 0.30,
+      "news": 0.15
+    }
+  },
+  "fred_api_key": "",
+  "news_feeds": [
+    "https://feeds.finance.yahoo.com/rss/2.0/headline?s=%5EGSPC&region=US&lang=en-US",
+    "https://www.federalreserve.gov/feeds/press_monetary.xml",
+    "https://www.federalreserve.gov/feeds/press_all.xml"
+  ],
+  "news_keywords": {
+    "fed_hawkish": ["rate hike", "higher for longer", "restrictive", "inflation", "warsh"],
+    "credit_stress": ["credit spread", "default", "high yield", "crack", "liquidity"],
+    "ai_earnings": ["magnificent", "mag 7", "ai spending", "capex", "nvidia", "earnings miss", "guidance"],
+    "recession": ["recession", "layoff", "unemployment", "soft landing", "hard landing"]
+  }
+}

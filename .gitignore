@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+data/cache/*
+!data/cache/.gitkeep
+config/fred_api_key.txt
+config/.fred_api_key
+.env
+*.xlsx
+scripts/_probe*.py

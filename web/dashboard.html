@@ -1,0 +1,644 @@
+<!doctype html><html lang="it"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SP500 Bubble Monitor</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --ground:#F4F6F7;--panel:#FFFFFF;--panel-2:#F0F3F4;--ink:#132027;--muted:#5E717B;
+  --line:#DAE2E5;--line-soft:#E9EEF0;--accent:#0E7C86;--accent-soft:#0e7c8618;
+  --profit:#0F9D6A;--profit-soft:#0f9d6a18;--loss:#D23B47;--loss-soft:#d23b4718;
+  --warn:#B8791C;--warn-soft:#b8791c1f;--ok:#0E7C86;--shadow:0 1px 2px #13202708,0 6px 20px #1320270a;
+  --mono:ui-monospace,"SF Mono","Cascadia Code","Roboto Mono",monospace;
+  --sans:"Segoe UI",system-ui,-apple-system,"Helvetica Neue",sans-serif;}
+@media (prefers-color-scheme:dark){:root{
+  --ground:#0E141A;--panel:#161F27;--panel-2:#1B2731;--ink:#E6EDF1;--muted:#8598A4;
+  --line:#26333D;--line-soft:#1F2A33;--accent:#3BB5AE;--accent-soft:#3bb5ae1f;
+  --profit:#3AC98A;--profit-soft:#3ac98a1c;--loss:#F0616C;--loss-soft:#f0616c1c;
+  --warn:#E0A63A;--warn-soft:#e0a63a1c;--ok:#3BB5AE;--shadow:0 1px 2px #0006,0 8px 28px #0004;}}
+:root[data-theme="dark"]{--ground:#0E141A;--panel:#161F27;--panel-2:#1B2731;--ink:#E6EDF1;
+  --muted:#8598A4;--line:#26333D;--line-soft:#1F2A33;--accent:#3BB5AE;--accent-soft:#3bb5ae1f;
+  --profit:#3AC98A;--profit-soft:#3ac98a1c;--loss:#F0616C;--loss-soft:#f0616c1c;
+  --warn:#E0A63A;--warn-soft:#e0a63a1c;--ok:#3BB5AE;--shadow:0 1px 2px #0006,0 8px 28px #0004;}
+:root[data-theme="light"]{--ground:#F4F6F7;--panel:#FFFFFF;--panel-2:#F0F3F4;--ink:#132027;
+  --muted:#5E717B;--line:#DAE2E5;--line-soft:#E9EEF0;--accent:#0E7C86;--accent-soft:#0e7c8618;
+  --profit:#0F9D6A;--profit-soft:#0f9d6a18;--loss:#D23B47;--loss-soft:#d23b4718;
+  --warn:#B8791C;--warn-soft:#b8791c1f;--ok:#0E7C86;--shadow:0 1px 2px #13202708,0 6px 20px #1320270a;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.45}
+.wrap{max-width:1180px;margin:0 auto;padding:14px 16px 72px}
+h2{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:0 0 12px;font-weight:700}
+.top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 2px 14px;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:17px}
+.brand .dot{width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.spacer{flex:1}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:4px 9px;border-radius:999px;border:1px solid var(--line);background:var(--panel)}
+.chip.ro{color:var(--muted)}
+.tog{cursor:pointer;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:999px;padding:5px 10px;font-size:12px;font-weight:600}
+.alert{margin-top:14px;border-radius:14px;padding:18px 18px 16px;border:1px solid var(--line);box-shadow:var(--shadow);position:relative;overflow:hidden}
+.alert::before{content:"";position:absolute;inset:0 auto 0 0;width:7px;background:var(--muted)}
+.alert.red{background:linear-gradient(135deg,var(--loss-soft),var(--panel) 55%);border-color:color-mix(in srgb,var(--loss) 35%,var(--line))}
+.alert.red::before{background:var(--loss)}
+.alert.amber{background:linear-gradient(135deg,var(--warn-soft),var(--panel) 55%);border-color:color-mix(in srgb,var(--warn) 35%,var(--line))}
+.alert.amber::before{background:var(--warn)}
+.alert.green{background:linear-gradient(135deg,var(--profit-soft),var(--panel) 55%)}
+.alert.green::before{background:var(--profit)}
+.alert .eyebrow{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.alert.red .eyebrow{color:var(--loss)}.alert.amber .eyebrow{color:var(--warn)}.alert.green .eyebrow{color:var(--profit)}
+.alert h1{margin:6px 0 8px;font-size:clamp(22px,3.5vw,32px);letter-spacing:-.02em;line-height:1.15}
+.alert .summary{font-size:15px;color:var(--ink);max-width:70ch}
+.alert .oneliner{margin-top:10px;font-family:var(--mono);font-size:12.5px;color:var(--muted)}
+.pulse{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;background:currentColor;box-shadow:0 0 0 0 currentColor;animation:pulse 1.6s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,currentColor 50%,transparent)}70%{box-shadow:0 0 0 10px transparent}100%{box-shadow:0 0 0 0 transparent}}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;box-shadow:var(--shadow)}
+.kpi .n{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:700}
+.kpi .v{font-family:var(--mono);font-size:28px;font-weight:700;margin-top:4px;letter-spacing:-.03em}
+.kpi .s{font-size:12px;color:var(--muted);margin-top:2px}
+.grid2{display:grid;grid-template-columns:1.1fr .9fr;gap:14px;margin-top:14px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:15px 16px;box-shadow:var(--shadow)}
+.chartbox{position:relative;height:260px}
+.chartbox.sm{height:200px}
+.cards{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.ind{border:1px solid var(--line);border-radius:12px;padding:12px 13px;background:var(--panel-2);display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:start}
+.ind .lamp{width:12px;height:12px;border-radius:50%;margin-top:4px;background:var(--muted)}
+.ind.red .lamp{background:var(--loss);box-shadow:0 0 0 4px var(--loss-soft)}
+.ind.amber .lamp{background:var(--warn);box-shadow:0 0 0 4px var(--warn-soft)}
+.ind.green .lamp{background:var(--profit);box-shadow:0 0 0 4px var(--profit-soft)}
+.ind .title{font-weight:700;font-size:14px}
+.ind .val{font-family:var(--mono);font-weight:700;font-size:18px;text-align:right}
+.ind .score{font-family:var(--mono);font-size:12px;color:var(--muted);text-align:right}
+.ind .meaning{grid-column:2 / span 2;font-size:12.5px;color:var(--muted);margin-top:2px}
+.ind .ref{grid-column:2 / span 2;font-size:11.5px;color:var(--muted);opacity:.85}
+.ind .actions{grid-column:1 / -1;display:flex;justify-content:flex-end;margin-top:4px}
+.btn-guide{cursor:pointer;border:1px solid var(--line);background:var(--panel);color:var(--accent);border-radius:999px;padding:4px 10px;font-size:11.5px;font-weight:700;letter-spacing:.04em}
+.btn-guide:hover{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 40%,var(--line))}
+.modal-back{position:fixed;inset:0;background:#13202766;backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;padding:18px;z-index:80}
+.modal-back.open{display:flex}
+.modal{width:min(640px,100%);max-height:min(86vh,820px);overflow:auto;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:20px 22px 18px}
+.modal h3{margin:0 0 6px;font-size:20px;letter-spacing:-.02em}
+.modal .eyebrow{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:10px}
+.modal .close{float:right;border:0;background:transparent;color:var(--muted);font-size:22px;line-height:1;cursor:pointer;padding:0 0 0 12px}
+.modal .close:hover{color:var(--ink)}
+.modal section{margin-top:14px}
+.modal section h4{margin:0 0 6px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.modal section p,.modal section li{font-size:14px;line-height:1.5;color:var(--ink);margin:0 0 8px}
+.modal ul{margin:0;padding-left:18px}
+.modal .footnote{margin-top:14px;font-size:12px;color:var(--muted)}
+.sec{margin-top:18px}
+.facts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.fact{border:1px solid var(--line-soft);border-radius:10px;padding:10px 12px;background:var(--panel-2)}
+.fact .lbl{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.fact .val{font-family:var(--mono);font-size:15px;font-weight:700;margin-top:4px;word-break:break-word}
+.fact .k{font-weight:500;color:var(--muted);font-size:12px}
+@media (max-width:900px){.facts{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.watch{list-style:none;margin:0;padding:0}
+.watch li{display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--line-soft)}
+.watch li:last-child{border:0}
+.watch .rank{font-family:var(--mono);font-weight:700;color:var(--accent)}
+.watch .theme{font-weight:700}
+.watch .detail{font-size:13px;color:var(--muted);margin-top:2px}
+.news{list-style:none;margin:0;padding:0}
+.news li{padding:10px 0;border-bottom:1px solid var(--line-soft)}
+.news a{color:var(--ink);font-weight:600;text-decoration:none}
+.news a:hover{color:var(--accent)}
+.tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:4px}
+.tag{font-size:10.5px;padding:2px 7px;border-radius:999px;background:var(--panel-2);border:1px solid var(--line-soft);color:var(--muted)}
+.note{margin-top:10px;padding:10px 12px;border-radius:9px;font-size:12.5px;background:var(--warn-soft);color:var(--warn)}
+.foot{margin-top:22px;padding-top:14px;border-top:1px solid var(--line);font-size:12px;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap}
+@media (max-width:900px){
+  .kpis,.grid2,.grid3,.cards{grid-template-columns:1fr}
+}
+</style></head>
+<body><div class="wrap">
+  <div class="top">
+    <div class="brand"><span class="dot"></span>SP500 · Bubble Monitor</div>
+    <span class="chip ro">read-only</span>
+    <div class="spacer"></div>
+    <span class="chip" id="upd">—</span>
+    <button class="tog" id="tog" type="button">tema</button>
+  </div>
+
+  <div class="alert amber" id="alert">
+    <div class="eyebrow"><span class="pulse" id="pulse"></span><span id="alertEye">STATO</span></div>
+    <h1 id="alertHead">Caricamento…</h1>
+    <div class="summary" id="alertSum"></div>
+    <div class="oneliner" id="alertOne"></div>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi"><div class="n">Prossimità bolla</div><div class="v" id="kProx">—</div><div class="s">composito 0–100</div></div>
+    <div class="kpi"><div class="n">Fragilità (molla)</div><div class="v" id="kFrag">—</div><div class="s">valutazioni · leva · concentrazione</div></div>
+    <div class="kpi"><div class="n">Innesco</div><div class="v" id="kTrig">—</div><div class="s">credito · Fed · recessione · AI</div></div>
+    <div class="kpi"><div class="n">News risk</div><div class="v" id="kNews">—</div><div class="s">headline fondamentali</div></div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h2>Mappa rischio — radar</h2>
+      <div class="chartbox"><canvas id="radar"></canvas></div>
+    </div>
+    <div class="card">
+      <h2>Gauge composito</h2>
+      <div class="chartbox"><canvas id="doughnut"></canvas></div>
+    </div>
+  </div>
+
+  <div class="sec card">
+    <h2>Fragilità — indicatori della molla</h2>
+    <div class="cards" id="fragCards"></div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h2>Score fragilità</h2>
+      <div class="chartbox sm"><canvas id="barFrag"></canvas></div>
+    </div>
+    <div class="card">
+      <h2>CAPE nel tempo</h2>
+      <div class="chartbox sm"><canvas id="lineCape"></canvas></div>
+    </div>
+  </div>
+
+  <div class="sec card">
+    <h2>Innesco — ciò che fa scoppiare</h2>
+    <div class="cards" id="trigCards"></div>
+  </div>
+
+  <div class="grid3">
+    <div class="card">
+      <h2>Score innesco</h2>
+      <div class="chartbox sm"><canvas id="barTrig"></canvas></div>
+    </div>
+    <div class="card">
+      <h2>HY OAS (bp)</h2>
+      <div class="chartbox sm"><canvas id="lineHy"></canvas></div>
+    </div>
+    <div class="card">
+      <h2>Curva 2s10s (bp)</h2>
+      <div class="chartbox sm"><canvas id="lineCurve"></canvas></div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h2>Buffett indicator (%)</h2>
+      <div class="chartbox sm"><canvas id="lineBuffett"></canvas></div>
+    </div>
+    <div class="card">
+      <h2>Prob. recessione (%)</h2>
+      <div class="chartbox sm"><canvas id="lineRec"></canvas></div>
+    </div>
+  </div>
+
+  <div class="sec card">
+    <h2>Sotto la superficie</h2>
+    <div class="facts" id="underFacts"></div>
+    <ul class="news" id="secItems" style="margin-top:12px"></ul>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h2>Cosa sorvegliare ora</h2>
+      <ul class="watch" id="watch"></ul>
+    </div>
+    <div class="card">
+      <h2>News fondamentali</h2>
+      <ul class="news" id="news"></ul>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:14px">
+    <h2>Come leggere questa dashboard</h2>
+    <p style="margin:0;color:var(--muted);font-size:13.5px">
+      <b style="color:var(--ink)">Rosso in alto</b> = fragilità alta <i>e</i> innesco attivo → zona scoppio.
+      <b style="color:var(--ink)">Ambra</b> = tarda bolla (molla carica, innesco spento) oppure vigilanza.
+      I semafori sulle card dicono quale pezzo sta bruciando. I grafici mostrano se lo stress sta arrivando (spread/curva/recessione) o se è solo valutazione estrema.
+    </p>
+    <div class="note">Analisi di scenario su dati pubblici — non consulenza finanziaria. Fonti: FRED, Shiller/multpl, FINRA, Slickcharts, NY Fed, Yahoo, RSS.</div>
+  </div>
+
+  <div class="foot">
+    <span id="srcnote">—</span>
+    <span id="quality">—</span>
+  </div>
+</div>
+
+<div class="modal-back" id="guideModal" role="dialog" aria-modal="true" aria-labelledby="guideTitle">
+  <div class="modal">
+    <button class="close" id="guideClose" type="button" aria-label="Chiudi">×</button>
+    <div class="eyebrow" id="guideGroup">Guida indicatore</div>
+    <h3 id="guideTitle">—</h3>
+    <div id="guideBody"></div>
+    <div class="footnote">Guida educativa basata sul piano-strategia del monitor — non è consulenza finanziaria.</div>
+  </div>
+</div>
+
+<script>
+const charts={};
+const css=k=>getComputedStyle(document.documentElement).getPropertyValue(k).trim();
+const ink=()=>css('--ink'); const muted=()=>css('--muted'); const line=()=>css('--line');
+const profit=()=>css('--profit'); const loss=()=>css('--loss'); const warn=()=>css('--warn'); const accent=()=>css('--accent');
+
+function fmt(v,suf=''){if(v==null||v===undefined||v==='')return '—'; const n=Number(v); return Number.isFinite(n)?`${n.toFixed(1)}${suf}`:`${v}${suf}`;}
+function fact(label,value){return `<div class="fact"><div class="lbl">${label}</div><div class="val">${value}</div></div>`;}
+function destroyChart(key){if(charts[key]){charts[key].destroy(); delete charts[key];}}
+
+const GUIDES={
+  cape:{
+    group:'Fragilità — molla',
+    title:'CAPE Shiller',
+    sections:[
+      ['Che cos\'è','Il CAPE (Cyclically Adjusted Price-to-Earnings) confronta il prezzo reale dell\'indice con la media degli utili reali degli ultimi 10 anni. Serve a smussare il ciclo economico: in recessione gli utili crollano e un P/E “normale” sembra a buon mercato anche se i prezzi sono alti.'],
+      ['Perché conta per la bolla','Valutazioni estreme non dicono quando scoppia, ma dicono quanto spazio c\'è verso il basso se arriva un innesco. Un CAPE molto alto = coda sinistra più grassa: più probabilità di ribassi profondi nel decennio successivo.'],
+      ['Come leggerlo qui','Mediana storica ~16. Sopra ~30 è già territorio caro; sopra ~40 è zona 1999–2000. Lo score 0–100 mappa il CAPE tra mediana ed estremo Dot-com: più alto = più fragilità.'],
+      ['Contesto storico','Il picco Dot-com è intorno a 44. Nel piano-strategia (ago 2026) si cita ~41,9. Se in dashboard vedi ~33, spesso il file Shiller in cache è aggiornato solo fino a mesi precedenti: controlla la data “as of” nelle fonti.'],
+      ['Cosa non è','Non è un timer. Il CAPE può restare alto a lungo. Non sostituisce credito, Fed o utili AI come segnale di timing.']
+    ]
+  },
+  buffett:{
+    group:'Fragilità — molla',
+    title:'Buffett indicator',
+    sections:[
+      ['Che cos\'è','Rapporto tra capitalizzazione del mercato azionario USA e PIL (o proxy simile). Warren Buffett lo ha usato come termometro di quanto il mercato “vale” rispetto all\'economia reale.'],
+      ['Perché conta','Quando le azioni valgono molto più del PIL, i rendimenti futuri attesi tendono a essere più bassi e il punto di partenza per una correzione è più alto. Sopra ~200% Buffett parlava di “giocare col fuoco”.'],
+      ['Come leggerlo qui','Fuoco ~200%, estremo ~230%+. Lo score sale da ~160% verso 230%+. In questa app il valore live preferisce Current Market Valuation quando la serie FRED World Bank è troppo vecchia.'],
+      ['Contesto storico','Nel piano (ago 2026) si citano letture ~234–237%. Valori sopra 200% sono già da tarda-bolla sul fronte valutazione/macro.'],
+      ['Causa e limite','È un indicatore lento e di livello, non di timing. Può restare estremo per anni se tassi e liquidità restano favorevoli.']
+    ]
+  },
+  household:{
+    group:'Fragilità — molla',
+    title:'Equity famiglie USA',
+    sections:[
+      ['Che cos\'è','Quota degli attivi finanziari delle famiglie americane investita in azioni (dirette, fondi, 401(k), ecc.), tipicamente dalla Z.1 della Fed via FRED.'],
+      ['Perché conta','Record di esposizione = più effetto ricchezza: i consumi seguono Wall Street. In un ribasso il colpo sul patrimonio è più ampio e può accelerare vendite forzate e recessione da domanda.'],
+      ['Come leggerlo qui','Picco Dot-com ~38,7%. Sopra quel livello è già storico; verso 45%+ è territorio “mai visto”. Lo score sale da ~33,7% verso ~47%.'],
+      ['Contesto storico','Dopo il 2000 e il 2008 la quota crollò; la risalita post-GFC ha portato a record. Non indica il giorno del crollo, ma quanto male farebbe un crollo all\'economia reale.'],
+      ['Cosa sorvegliare','Se scende di colpo insieme a prezzi e credito, può segnalare de-risking forzato. Se resta alta mentre i prezzi scendono, la pressione sui consumi cresce.']
+    ]
+  },
+  concentration:{
+    group:'Fragilità — molla',
+    title:'Peso Mag7 / Top10',
+    sections:[
+      ['Che cos\'è','Quanto pesano i Magnificent 7 (e, in nota, i Top 10) sull\'S&P 500. Qui il valore principale dello score è il peso Mag7 da Slickcharts.'],
+      ['Perché conta','Concentrazione = rischio “singolo nome”: una trimestrale AI/tech può muovere l\'intero indice. È la fragilità tipica della bolla AI rispetto al 2000 (allora meno utili, oggi più concentrazione + utili).'],
+      ['Come leggerlo qui','Elevato da ~25%; estremo Mag7 ~33%+. Nel piano i Mag7 hanno toccato ~35% e i Top10 ~38%. Lo score 0–100 sale tra elevated ed extreme+.'],
+      ['Come usarlo','Guarda insieme a “Stress concentrazione” e alla variazione media Mag7: peso alto + momentum debole = fragilità che inizia a crepare sotto la superficie.'],
+      ['Limite','Il peso da solo non fa scoppiare nulla. Diventa pericoloso quando si combina con leva, multipli alti e un innesco (Fed, credito, earnings miss).']
+    ]
+  },
+  margin:{
+    group:'Fragilità — molla',
+    title:'Margin debt',
+    sections:[
+      ['Che cos\'è','Debito usato per comprare azioni a leva (margin). Nel piano FINRA cita record e +51% YoY; qui, per evitare ban IP, usiamo spesso un proxy FRED Z.1 (margin loans) che non è identico ai debit balances FINRA.'],
+      ['Perché conta','I picchi di margin debt hanno anticipato massimi importanti (2000, 2007, 2021): quando arriva lo stress, i margin call forzano vendite e accelerano il ribasso.'],
+      ['Come leggerlo qui','Lo score guarda soprattutto la variazione % anno su anno: ~20% YoY = elevato, ~40%+ = estremo. Un YoY basso (~2%) dà score ~0 anche se il livello assoluto in miliardi è alto: è una scelta del modello attuale.'],
+      ['Attenzione alla fonte','Se vedi “FRED Z.1 … proxy”, il livello ($B) e il YoY non sono confrontabili 1:1 con i titoli FINRA del piano. Un score basso sul YoY non cancella Buffett/CAPE alti.'],
+      ['Cosa sorvegliare','Ripresa del YoY, record di livello, e contemporaneo allargamento degli spread: leva + credito = innesco classico.']
+    ]
+  },
+  under:{
+    group:'Fragilità — molla',
+    title:'Stress concentrazione',
+    sections:[
+      ['Che cos\'è','Indicatore composito 0–100 che sintetizza quanto l\'indice dipende dai mega-cap (pesi Mag7/Top10 e stress correlati “sotto la superficie”).'],
+      ['Perché conta','Traduce la concentrazione in un semaforo unico: utile quando i pesi sono alti e il mercato “indice” maschera già un drawdown medio dei singoli titoli.'],
+      ['Come leggerlo','Verso 70–100: dipendenza estrema dai leader AI. Verde/ambra basso: mercato più ampio. Non sostituisce HY OAS o Fed come timer.'],
+      ['Come si collega','È il ponte tra le card di peso Mag7/Top10 e la sezione “Sotto la superficie” (drawdown, 8-K, momentum NASDAQ).']
+    ]
+  },
+  spxdd:{
+    group:'Fragilità — molla',
+    title:'S&P vs max 52w',
+    sections:[
+      ['Che cos\'è','Distanza percentuale dell\'S&P 500 (serie FRED SP500) dal massimo circa a 1 anno. 0% = ai massimi; −8% = già in washout tipico di breve periodo.'],
+      ['Perché conta','In una tarda bolla il mercato può restare vicino ai massimi mentre sotto la superficie i singoli titoli correggono. Vicino a 0% con valutazioni estreme = “caro e sereno in superficie”.'],
+      ['Come leggerlo','Vicino a 0%: poca digestione del rischio. −3/−8%: correzione ordinaria in corso. −20%+: bear market già visibile sull\'indice (allora l\'innesco di solito è già attivo).'],
+      ['Extra in card','YTD e max drawdown 1y aiutano a capire se il 0% sul massimo è un nuovo high recente o un recupero fragile.']
+    ]
+  },
+  hy_oas:{
+    group:'Innesco',
+    title:'HY credit spread',
+    sections:[
+      ['Che cos\'è','High Yield Option-Adjusted Spread: premio di rendimento delle obbligazioni junk rispetto ai Treasuries, in punti base. Misura quanto il mercato del credito “ha paura”.'],
+      ['Perché è l\'innesco n.1','Storicamente lo stress del credito precede spesso i crolli azionari. Spread stretti = compiacenza; allargamento rapido = liquidità che si ritira.'],
+      ['Come leggerlo qui','Sotto ~350 bp: zona complaciuta (score basso). Verso 500+ bp: stress (score alto). Oggi valori ~270 bp dicono: innesco credito ancora spento.'],
+      ['Cosa fare','Sorvegliare non solo il livello ma la velocità di allargamento. Un salto da 270 a 400 in poche settimane è più importante di un livello statico.']
+    ]
+  },
+  curve:{
+    group:'Innesco',
+    title:'Curva 2s10s',
+    sections:[
+      ['Che cos\'è','Differenza di rendimento tra Treasuries a 10 anni e a 2 anni (T10Y2Y), in bp. Negativa = curva invertita.'],
+      ['Perché conta','L\'inversione segnala tardo-ciclo; spesso il momento pericoloso è l\'uscita dall\'inversione (curva che torna positiva) mentre arriva o si avvicina una recessione.'],
+      ['Come leggerlo','&lt;0: inversione. 0–80 bp: tipica ambra tardo-ciclo. Steepening ampio: meno tensione ciclica immediata (ma dipende dal contesto Fed).'],
+      ['Limite','Da sola non fa scoppiare la bolla; va letta con probabilità di recessione NY Fed e con gli spread HY.']
+    ]
+  },
+  recession:{
+    group:'Innesco',
+    title:'Prob. recessione',
+    sections:[
+      ['Che cos\'è','Proxy della probabilità di recessione (qui modello/serie NY Fed da allmonth.xls). Non è una certezza: è un termometro ciclico.'],
+      ['Perché conta','I ribassi severi (−45/−55%+) nella storia da valutazioni estreme arrivano soprattutto con recessione o crisi creditizia, non con la sola valutazione.'],
+      ['Soglie tipiche','Ambra ~25%, rosso ~40%+. Sotto 25% con HY stretto = innesco ancora spento, anche se CAPE/Buffett sono estremi.'],
+      ['Messaggio chiave del piano','Fragilità alta + recessione/credit off = coda sinistra densa ma non ancora “scoppio cronometrato”.']
+    ]
+  },
+  fed:{
+    group:'Innesco',
+    title:'Fed funds',
+    sections:[
+      ['Che cos\'è','Tasso sui federal funds (policy rate della Fed). Qui entra anche un boost da headline hawkish nelle news RSS.'],
+      ['Perché conta','Fu l\'inasprimento monetario a bucare il 2000. Una sorpresa restrittiva (toni hawkish, rialzi, QT aggressivo) può trasformare la molla carica in crollo.'],
+      ['Come leggerlo','Tassi più alti → score innesco più alto. Headline “hawkish” alzano ulteriormente il rischio. Non basta un livello: conta il percorso atteso dal mercato.'],
+      ['Ordine di sorveglianza','Nel piano è il #1 da guardare: Fed restrittiva → poi credito → poi utili AI.']
+    ]
+  },
+  ai:{
+    group:'Innesco',
+    title:'Rischio utili AI',
+    sections:[
+      ['Che cos\'è','Score 0–100 sul rischio di delusione utili/capex AI sui Mag7, da keyword nelle news e (se disponibili) filing 8-K SEC.'],
+      ['Perché conta','Differenza vs 2000: oggi i leader hanno utili enormi. Se quegli utili deludono, i multipli si comprimono proprio sui titoli che reggono l\'indice.'],
+      ['Come leggerlo','Basso (es. &lt;25): poche evidenze di stress earnings. Alto: headline/filing che parlano di miss, guidance cut, capex delusione.'],
+      ['Limite','È un proxy testuale, non un modello di EPS. Serve come allarme precoce qualitativo, da confermare con trimestrali reali.']
+    ]
+  },
+  mag7chg:{
+    group:'Innesco',
+    title:'Mag7 variazione media',
+    sections:[
+      ['Che cos\'è','Media delle variazioni % giornaliere (o di sessione) dei Magnificent 7 da API quote NASDAQ — senza Yahoo, per ridurre rischio ban IP.'],
+      ['Perché conta','Debolezza concentrata sui mega-cap mentre l\'indice tiene = stress “sotto la superficie”. Forza ampia Mag7 = il motore della bolla AI è ancora acceso.'],
+      ['Come leggerlo','Positiva e ampia: momentum a favore. Vicino a zero / negativa con molti “losers”: primi screpoli. Va letta con pesi e 8-K SEC.'],
+      ['Nota','È un segnale a frequenza alta (rumoroso). Non sostituisce HY OAS o Fed sul timing di medio periodo.']
+    ]
+  }
+};
+
+function guideHtml(g){
+  return (g.sections||[]).map(([h,p])=>`<section><h4>${h}</h4><p>${p}</p></section>`).join('');
+}
+function openGuide(key, fallbackTitle){
+  const g=GUIDES[key]||{
+    group:'Guida indicatore',
+    title:fallbackTitle||key,
+    sections:[['Info','Guida dettagliata non ancora disponibile per questa scheda.']]
+  };
+  document.getElementById('guideGroup').textContent=g.group||'Guida';
+  document.getElementById('guideTitle').textContent=g.title||fallbackTitle||key;
+  document.getElementById('guideBody').innerHTML=guideHtml(g);
+  document.getElementById('guideModal').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeGuide(){
+  document.getElementById('guideModal').classList.remove('open');
+  document.body.style.overflow='';
+}
+
+function seriesXY(arr){
+  const labels=[], data=[];
+  (arr||[]).forEach(p=>{ if(p&&p.value!=null){ labels.push((p.date||'').slice(0,7)); data.push(Number(p.value)); }});
+  return {labels, data};
+}
+
+function lineChart(key, canvasId, arr, color, refLines){
+  destroyChart(key);
+  const {labels,data}=seriesXY(arr);
+  const el=document.getElementById(canvasId);
+  if(!el) return;
+  if(!data.length){
+    el.parentElement.insertAdjacentHTML('beforeend','<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px" id="'+key+'_empty">Serie non ancora in cache — rilancia engine</div>');
+    return;
+  }
+  const empty=document.getElementById(key+'_empty'); if(empty) empty.remove();
+  const ann=[];
+  (refLines||[]).forEach(r=>{
+    ann.push({
+      type:'line', yMin:r.y, yMax:r.y,
+    });
+  });
+  // annotation plugin non caricato: disegna come dataset tratteggiato
+  const datasets=[{
+    label:key, data, borderColor:color, backgroundColor:color+'22',
+    fill:true, tension:.25, pointRadius:0, borderWidth:2
+  }];
+  (refLines||[]).forEach(r=>{
+    datasets.push({
+      label:r.label, data:labels.map(()=>r.y), borderColor:r.color||muted(),
+      borderDash:[6,4], pointRadius:0, borderWidth:1.5, fill:false
+    });
+  });
+  charts[key]=new Chart(el,{
+    type:'line',
+    data:{labels, datasets},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:!!(refLines&&refLines.length), labels:{color:muted(), boxWidth:10}}},
+      scales:{
+        x:{ticks:{color:muted(), maxTicksLimit:6, font:{size:10}}, grid:{color:line()}},
+        y:{ticks:{color:muted(), font:{size:10}}, grid:{color:line()}}
+      }
+    }
+  });
+}
+
+function barChart(key, canvasId, items, color){
+  destroyChart(key);
+  const el=document.getElementById(canvasId);
+  const labels=(items||[]).map(x=>x.label);
+  const data=(items||[]).map(x=>x.value??0);
+  const colors=data.map(v=>v>=70?loss():v>=45?warn():profit());
+  charts[key]=new Chart(el,{
+    type:'bar',
+    data:{labels, datasets:[{data, backgroundColor:colors, borderRadius:6, borderSkipped:false}]},
+    options:{
+      indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{min:0,max:100, ticks:{color:muted()}, grid:{color:line()}},
+        y:{ticks:{color:muted()}, grid:{display:false}}
+      }
+    }
+  });
+}
+
+function radarChart(key, canvasId, radar){
+  destroyChart(key);
+  const el=document.getElementById(canvasId);
+  charts[key]=new Chart(el,{
+    type:'radar',
+    data:{
+      labels:radar.labels||[],
+      datasets:[{
+        data:radar.values||[],
+        borderColor:accent(), backgroundColor:accent()+'33',
+        pointBackgroundColor:accent(), borderWidth:2
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{r:{min:0,max:100, ticks:{display:false}, grid:{color:line()}, pointLabels:{color:muted(), font:{size:11}}, angleLines:{color:line()}}}
+    }
+  });
+}
+
+function doughnutChart(key, canvasId, gauge){
+  destroyChart(key);
+  const el=document.getElementById(canvasId);
+  const prox=gauge.proximity??0;
+  const rest=Math.max(0,100-prox);
+  const col=prox>=70?loss():prox>=45?warn():profit();
+  charts[key]=new Chart(el,{
+    type:'doughnut',
+    data:{
+      labels:['Prossimità','Margine'],
+      datasets:[{data:[prox, rest], backgroundColor:[col, line()], borderWidth:0}]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false, cutout:'72%',
+      plugins:{
+        legend:{display:false},
+        title:{display:true, text:`${Number(prox).toFixed(0)} / 100`, color:ink(), font:{size:22, weight:'700'}}
+      }
+    }
+  });
+}
+
+function renderCards(cards){
+  const frag=document.getElementById('fragCards');
+  const trig=document.getElementById('trigCards');
+  frag.innerHTML=''; trig.innerHTML='';
+  (cards||[]).forEach(c=>{
+    const unit=c.unit||'';
+    const val=fmt(c.value, unit?` ${unit}`:'');
+    const key=c.key||'';
+    const html=`<div class="ind ${c.status||''}" data-key="${key}">
+      <div class="lamp"></div>
+      <div><div class="title">${c.title}</div></div>
+      <div><div class="val">${val}</div><div class="score">score ${fmt(c.score)}</div></div>
+      <div class="meaning">${c.meaning||''}</div>
+      <div class="ref">${c.reference||''}</div>
+      <div class="actions"><button class="btn-guide" type="button" data-guide="${key}" data-title="${(c.title||'').replace(/"/g,'&quot;')}">Guida</button></div>
+    </div>`;
+    if(c.group==='trigger') trig.insertAdjacentHTML('beforeend', html);
+    else frag.insertAdjacentHTML('beforeend', html);
+  });
+}
+
+document.getElementById('fragCards').addEventListener('click',e=>{
+  const b=e.target.closest('[data-guide]'); if(!b) return;
+  openGuide(b.getAttribute('data-guide'), b.getAttribute('data-title'));
+});
+document.getElementById('trigCards').addEventListener('click',e=>{
+  const b=e.target.closest('[data-guide]'); if(!b) return;
+  openGuide(b.getAttribute('data-guide'), b.getAttribute('data-title'));
+});
+document.getElementById('guideClose').onclick=closeGuide;
+document.getElementById('guideModal').addEventListener('click',e=>{
+  if(e.target.id==='guideModal') closeGuide();
+});
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeGuide(); });
+
+function render(d){
+  if(d.empty||d.error){
+    document.getElementById('alertHead').textContent=d.empty?'Nessun dato':'Errore';
+    document.getElementById('alertSum').textContent=d.note||d.error||'Esegui python -m engine.run_engine';
+    return;
+  }
+  const a=d.alert||{};
+  const level=a.level||'amber';
+  const alertEl=document.getElementById('alert');
+  alertEl.className='alert '+level;
+  document.getElementById('alertEye').textContent=level==='red'?'ALLARME':level==='amber'?'ATTENZIONE':'OK';
+  document.getElementById('alertHead').textContent=a.headline||d.regime||'—';
+  document.getElementById('alertSum').textContent=a.summary||'';
+  document.getElementById('alertOne').textContent=a.one_liner||'';
+  document.getElementById('upd').textContent=(d.updated_at||'').slice(0,16).replace('T',' ')||'—';
+  document.getElementById('srcnote').textContent=d._served_from==='fixture'
+    ?'sorgente: fixture (cache vuota — lancia engine per dati live)'
+    :'sorgente: data/cache/bubble_state.json';
+  const q=d.data_quality||{};
+  const fs=q.fred_sources||{};
+  const alts=(q.fred_alts_used||[]).join(',')||'—';
+  document.getElementById('quality').textContent=
+    `FRED key:${q.fred_api_key_present?'yes':'no'} · alts:${alts} · CAPE:${q.cape_source||'—'} · pesi:${q.weights_source||'—'} · recessione:${q.recession_source||'—'} · margin:${q.margin_source||'—'} · news:${q.news_items??'—'} · HY:${fs.hy_oas||'—'} · famiglie:${fs.household_equity_pct||'—'}`;
+
+  document.getElementById('kProx').textContent=fmt(d.bubble_proximity);
+  document.getElementById('kFrag').textContent=fmt(d.fragility_score);
+  document.getElementById('kTrig').textContent=fmt(d.trigger_score);
+  document.getElementById('kNews').textContent=fmt(d.news_score);
+
+  renderCards(d.cards||[]);
+  const ch=d.charts||{};
+  radarChart('radar','radar', ch.radar||{labels:[],values:[]});
+  doughnutChart('donut','doughnut', ch.gauge||{});
+  barChart('barFrag','barFrag', (ch.bars||{}).fragility||[]);
+  barChart('barTrig','barTrig', (ch.bars||{}).trigger||[]);
+  const thr=ch.thresholds||{};
+  lineChart('cape','lineCape', (ch.series||{}).cape, accent(), [{y:thr.cape_extreme||40,label:'estremo 40',color:loss()}]);
+  lineChart('hy','lineHy', (ch.series||{}).hy_oas_bp, loss(), [
+    {y:thr.hy_oas_complacent||350,label:'350 compi.',color:warn()},
+    {y:thr.hy_oas_stress||500,label:'500 stress',color:loss()}
+  ]);
+  lineChart('curve','lineCurve', (ch.series||{}).yield_curve_bp, warn(), [{y:0,label:'0 invertita',color:loss()}]);
+  lineChart('buffett','lineBuffett', (ch.series||{}).buffett_pct, accent(), [{y:thr.buffett_fire||200,label:'200 fuoco',color:loss()}]);
+  lineChart('rec','lineRec', (ch.series||{}).recession_prob_pct, loss(), [{y:40,label:'40% rosso',color:loss()}]);
+
+  try{
+    const u=d.under_surface||{};
+    document.getElementById('underFacts').innerHTML=[
+      fact('S&P last', `${u.spx_last??'—'} <span class="k">(${u.spx_as_of||''})</span>`),
+      fact('vs max ~52w', u.dist_52w_high_pct==null?'—':`${Number(u.dist_52w_high_pct).toFixed(2)}%`),
+      fact('YTD', u.ytd_pct==null?'—':`${Number(u.ytd_pct).toFixed(2)}%`),
+      fact('Max DD 1y', u.max_drawdown_1y_pct==null?'—':`${Number(u.max_drawdown_1y_pct).toFixed(2)}%`),
+      fact('Mag7 avg chg', u.mag7_avg_change_pct==null?'—':`${Number(u.mag7_avg_change_pct).toFixed(2)}%`),
+      fact('Mag7 losers', u.mag7_losers==null?'—':`${u.mag7_losers}`),
+      fact('Top10 / Mag7 weight', `${fmt(u.top10_weight_pct,'%')} / ${fmt(u.mag7_weight_pct,'%')}`),
+      fact('Fonte', u.source||'—'),
+    ].join('');
+    const sec=(u.sec_8k_items||[]);
+    document.getElementById('secItems').innerHTML=sec.length
+      ?sec.map(it=>{
+        const t=it.title||'';
+        const head=it.link?`<a href="${it.link}" target="_blank" rel="noopener">${it.ticker}: ${t}</a>`:`${it.ticker}: ${t}`;
+        return `<li>${head}</li>`;
+      }).join('')
+      :'<li style="color:var(--muted);font-size:13px">Nessun 8-K recente in cache</li>';
+  }catch(e){console.error('under_surface render', e);}
+
+  try{
+    const watch=d.watch_order||[];
+    document.getElementById('watch').innerHTML=watch.map(w=>
+      `<li><span class="rank">${w.rank??''}</span><div><div class="theme">${w.theme||''}</div><div class="detail">${w.detail||''}</div></div></li>`
+    ).join('')||'<li class="detail">—</li>';
+  }catch(e){console.error('watch render', e);}
+
+  try{
+    const items=(((d.indicators||{}).news)||{}).items||[];
+    document.getElementById('news').innerHTML=items.length?items.slice(0,10).map(it=>{
+      const tags=(it.tags||[]).map(t=>`<span class="tag">${t}</span>`).join('');
+      const title=it.title||'(senza titolo)';
+      const head=it.link?`<a href="${it.link}" target="_blank" rel="noopener">${title}</a>`:title;
+      return `<li>${head}<div class="tags">${tags||'<span class="tag">untagged</span>'}</div></li>`;
+    }).join():'<li style="color:var(--muted)">Nessuna news in cache</li>';
+  }catch(e){console.error('news render', e);}
+}
+
+const root=document.documentElement;
+document.getElementById('tog').onclick=()=>{
+  const cur=root.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
+  root.setAttribute('data-theme', cur==='dark'?'light':'dark');
+  load();
+};
+function load(){fetch('/api/state',{cache:'no-store'}).then(r=>r.json()).then(render)
+  .catch(()=>{document.getElementById('alertHead').textContent='Dati non raggiungibili';});}
+load(); setInterval(load,60000);
+</script></body></html>

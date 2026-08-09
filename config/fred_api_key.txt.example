@@ -1,0 +1,4 @@
+# Rinomina questo file in fred_api_key.txt e incolla la chiave (32 caratteri).
+# Chiave gratis: https://fredaccount.stlouisfed.org/apikeys
+# Oppure: setx FRED_API_KEY "la_tua_chiave"
+YOUR_32_CHAR_FRED_API_KEY_HERE
