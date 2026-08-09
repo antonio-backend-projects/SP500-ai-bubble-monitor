@@ -1,0 +1,21 @@
+---
+description: Memoria progetto SP500-ai-bubble-monitor — leggere docs prima di modificare
+alwaysApply: true
+---
+
+# SP500-ai-bubble-monitor
+
+Prima di implementare o spiegare lo stato del progetto, consulta:
+
+1. `docs/PROJECT_MEMORY.md` (handoff completo)
+2. `evolutive/README.md` (backlog)
+3. `AGENTS.md`
+
+## Vincoli
+
+- UI igedge-style in `web/dashboard.html` — non Streamlit
+- Dashboard read-only — nessun fetch da browser/API write
+- Fonti: FRED API, NASDAQ, SEC, Shiller, Slickcharts, NY Fed, RSS — Yahoo Mag7 off
+- Margin: proxy FRED Z.1 ≠ FINRA; non martellare scrape 403
+- Alert “RISCHIO CONTENUTO” con Buffett/household estremi è un noto difetto di aggregazione (margin YoY / CAPE stale), non “mercato safe”
+- Produzione target: Docker + cron + Cloudflare Tunnel (vedi `evolutive/13-docker-tunnel-docs-rename.md`)

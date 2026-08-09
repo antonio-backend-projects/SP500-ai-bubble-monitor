@@ -1,6 +1,7 @@
 # Evolutive — cosa manca / cosa migliorare
 
-Cartella di backlog per il progetto (cartella di test attuale; repo definitivo **`SP500-ai-bubble-monitor`**).  
+Cartella di backlog per **SP500-ai-bubble-monitor**.  
+Memoria acquisita / handoff: [`docs/PROJECT_MEMORY.md`](../docs/PROJECT_MEMORY.md).  
 Ogni file elenca gap, idee e priorità *possibili* — non è un impegno di roadmap.
 
 | File | Tema |

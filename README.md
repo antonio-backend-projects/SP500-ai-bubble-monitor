@@ -1,15 +1,21 @@
-# SP500 Bubble Monitor
+# SP500 AI Bubble Monitor
 
-Monitor di **fragilità vs innesco** per il mercato azionario USA: distingue quanto è "carica la molla" (valutazioni, leva, concentrazione) da cosa storicamente fa scattare il crollo (spread credito, curva, Fed, utili AI).
+Repo: **SP500-ai-bubble-monitor**. Monitor di **fragilità vs innesco** per il mercato azionario USA (bolla AI): distingue quanto è "carica la molla" (valutazioni, leva, concentrazione) da cosa storicamente fa scattare il crollo (spread credito, curva, Fed, utili AI).
 
-La logica di scenario è descritta in [`piano-strategia.md`](piano-strategia.md).
+| Doc | Perché |
+|-----|--------|
+| [`docs/PROJECT_MEMORY.md`](docs/PROJECT_MEMORY.md) | **Memoria completa** del progetto (handoff chat/agent) |
+| [`docs/`](docs/) | Docs tecnici (architettura, fonti, scoring, ops) |
+| [`evolutive/`](evolutive/) | Backlog di ciò che manca |
+| [`piano-strategia.md`](piano-strategia.md) | Logica di scenario |
+| [`AGENTS.md`](AGENTS.md) | Istruzioni per agent Cursor |
 
-UI: **vanilla HTML + CSS + JS** (stesso approccio di [igedge](../igedge)), servita da un HTTP server Python read-only. Niente Streamlit.
+UI: **vanilla HTML + CSS + JS** (stile [igedge](../igedge)), server Python read-only. Niente Streamlit.
 
 ## Installazione
 
 ```bash
-cd SP500-bubble-monitor
+cd SP500-ai-bubble-monitor
 python -m venv .venv
 .venv\Scripts\activate          # Windows
 # source .venv/bin/activate     # Linux/macOS
