@@ -105,6 +105,12 @@ h2{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--mute
 .tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:4px}
 .tag{font-size:10.5px;padding:2px 7px;border-radius:999px;background:var(--panel-2);border:1px solid var(--line-soft);color:var(--muted)}
 .note{margin-top:10px;padding:10px 12px;border-radius:9px;font-size:12.5px;background:var(--warn-soft);color:var(--warn)}
+.trust{margin-top:12px;border-radius:12px;padding:12px 14px;border:1px solid var(--line);background:var(--panel);font-size:13px}
+.trust.ok{border-color:color-mix(in srgb,var(--profit) 45%,var(--line));background:linear-gradient(135deg,var(--profit-soft),var(--panel) 60%)}
+.trust.warn{border-color:color-mix(in srgb,var(--warn) 45%,var(--line));background:linear-gradient(135deg,var(--warn-soft),var(--panel) 60%)}
+.trust.bad{border-color:color-mix(in srgb,var(--loss) 45%,var(--line));background:linear-gradient(135deg,var(--loss-soft),var(--panel) 60%)}
+.trust .t-title{font-weight:700;margin-bottom:4px}
+.trust .t-meta{color:var(--muted);font-size:12px;font-family:var(--mono);line-height:1.45;word-break:break-all}
 .foot{margin-top:22px;padding-top:14px;border-top:1px solid var(--line);font-size:12px;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap}
 @media (max-width:900px){
   .kpis,.grid2,.grid3,.cards{grid-template-columns:1fr}
@@ -112,11 +118,16 @@ h2{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--mute
 </style></head>
 <body><div class="wrap">
   <div class="top">
-    <div class="brand"><span class="dot"></span>SP500 · Bubble Monitor</div>
+    <div class="brand"><span class="dot"></span>SP500 · AI Bubble Monitor</div>
     <span class="chip ro">read-only</span>
     <div class="spacer"></div>
     <span class="chip" id="upd">—</span>
     <button class="tog" id="tog" type="button">tema</button>
+  </div>
+
+  <div class="trust warn" id="trustBox">
+    <div class="t-title" id="trustTitle">Verifica dati…</div>
+    <div class="t-meta" id="trustMeta">—</div>
   </div>
 
   <div class="alert amber" id="alert">
@@ -562,9 +573,23 @@ function render(d){
   document.getElementById('alertSum').textContent=a.summary||'';
   document.getElementById('alertOne').textContent=a.one_liner||'';
   document.getElementById('upd').textContent=(d.updated_at||'').slice(0,16).replace('T',' ')||'—';
+  const trust=d._trust||'';
+  const tbox=document.getElementById('trustBox');
+  tbox.className='trust '+(trust==='live_ok'?'ok':(trust==='live_partial'||trust==='live_weak'?'warn':'bad'));
+  document.getElementById('trustTitle').textContent=d._trust_label||'Stato dati';
+  const tc=d._trust_checks||{};
+  document.getElementById('trustMeta').textContent=[
+    `progetto: ${d._project||'—'}`,
+    `repo: ${d._repo_root||'—'}`,
+    `CAPE ${tc.cape??'—'} (${tc.cape_source||'—'} · ${tc.cape_as_of||'—'})`,
+    `Margin $${tc.margin_billion??'—'}B YoY ${tc.margin_yoy??'—'}% · ${tc.margin_source||'—'}`,
+    `Buffett ${tc.buffett??'—'}% · famiglie ${tc.household!=null?Number(tc.household).toFixed(1):'—'}%`,
+    `frag ${tc.fragility??'—'} · trig ${tc.trigger??'—'}`,
+  ].join(' · ');
+
   document.getElementById('srcnote').textContent=d._served_from==='fixture'
     ?'sorgente: fixture (cache vuota — lancia engine per dati live)'
-    :'sorgente: data/cache/bubble_state.json';
+    :`sorgente: ${(d._state_path||'data/cache/bubble_state.json')}`;
   const q=d.data_quality||{};
   const fs=q.fred_sources||{};
   const alts=(q.fred_alts_used||[]).join(',')||'—';

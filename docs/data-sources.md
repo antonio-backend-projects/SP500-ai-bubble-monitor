@@ -13,7 +13,7 @@ Principio: **probe prima, implementa dopo**. Nessuna fonte nuova senza test stat
 | Household equity | FRED Z.1 | — | record vs Dot-com 38.7% |
 | GDP | FRED `GDP` | — | |
 | CAPE | Shiller XLS | multpl / seed 41.9 | verificare stale |
-| Margin | FRED Z.1 `BOGZ1FL663067003Q` | FINRA HTML (403) / seed | **proxy ≠ FINRA** |
+| Margin FINRA | FINRA.org margin-statistics (tabella) | Mirror CSV thetrading.tools → FRED Z.1 → seed | Debit balances ufficiali; xlsx diretto spesso 403 |
 | Pesi Mag7/Top10 | Slickcharts | — | |
 | Mag7 quote | NASDAQ API | Yahoo OFF | |
 | SPX drawdown | FRED `SP500` | — | |

@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
 """
-SP500 Bubble Monitor — web server READ-ONLY (stile igedge).
+SP500 AI Bubble Monitor — web server READ-ONLY (stile igedge).
 
 Serve:
   /              web/dashboard.html
-  /api/state     data/cache/bubble_state.json (fallback fixture)
+  /api/state     data/cache/bubble_state.json (+ metadati fiducia)
   /salute        healthcheck
 
 SICUREZZA: solo GET, nessun endpoint che lancia l'engine o scarica dati.
-L'aggiornamento dati resta CLI: python -m engine.run_engine
 """
 from __future__ import annotations
 
@@ -36,6 +35,66 @@ HTML = os.path.join(ROOT, 'web', 'dashboard.html')
 STATE = os.path.join(ROOT, 'data', 'cache', 'bubble_state.json')
 FIXTURE = os.path.join(ROOT, 'tests', 'fixtures', 'sample_bubble_state.json')
 PORT = int(os.getenv('WEB_PORT', '8891'))
+PROJECT = 'SP500-ai-bubble-monitor'
+
+
+def _annotate(data: dict, *, served_from: str) -> dict:
+    """Metadati anti-confusione: quale repo / quale file / se i pezzi chiave sono affidabili."""
+    q = data.get('data_quality') or {}
+    ind = data.get('indicators') or {}
+    margin_src = str(q.get('margin_source') or ind.get('margin_source') or '')
+    cape_src = str(q.get('cape_source') or ind.get('cape_source') or '')
+    cape_as_of = str(ind.get('cape_as_of') or '')
+
+    finra_ok = (
+        'finra' in margin_src.lower()
+        or 'thetrading.tools' in margin_src.lower()
+        or 'margin-statistics' in margin_src.lower()
+    ) and 'z.1' not in margin_src.lower() and 'proxy' not in margin_src.lower()
+    cape_ok = 'seed' not in cape_src.lower() and (
+        'multpl' in cape_src.lower()
+        or ('shiller' in cape_src.lower() and cape_as_of[:4] >= '2025')
+    )
+    seedish = bool(data.get('still_seed')) or 'seed' in margin_src.lower() or 'seed' in cape_src.lower()
+
+    if served_from == 'fixture':
+        trust = 'fixture'
+        trust_label = 'FIXTURE DI TEST — non usare come segnale'
+    elif seedish:
+        trust = 'seed'
+        trust_label = 'DATI PARZIALMENTE SEED — non affidabile al 100%'
+    elif finra_ok and cape_ok:
+        trust = 'live_ok'
+        trust_label = 'DATI LIVE AFFIDABILI (CAPE + margin FINRA + FRED)'
+    elif cape_ok:
+        trust = 'live_partial'
+        trust_label = 'LIVE PARZIALE — margin non FINRA (proxy/altro)'
+    else:
+        trust = 'live_weak'
+        trust_label = 'LIVE DEBOLE — CAPE o margin da verificare'
+
+    data['_served_from'] = served_from
+    data['_project'] = PROJECT
+    data['_repo_root'] = ROOT
+    data['_state_path'] = STATE if served_from == 'cache' else FIXTURE
+    data['_trust'] = trust
+    data['_trust_label'] = trust_label
+    data['_trust_checks'] = {
+        'finra_margin': finra_ok,
+        'cape_fresh': cape_ok,
+        'margin_source': margin_src,
+        'cape_source': cape_src,
+        'cape_as_of': cape_as_of,
+        'buffett': ind.get('buffett_pct'),
+        'household': ind.get('household_equity_pct'),
+        'margin_billion': ind.get('margin_debit_billion'),
+        'margin_yoy': ind.get('margin_debt_yoy_pct'),
+        'cape': ind.get('cape'),
+        'alert': (data.get('alert') or {}).get('headline'),
+        'fragility': data.get('fragility_score'),
+        'trigger': data.get('trigger_score'),
+    }
+    return data
 
 
 class H(BaseHTTPRequestHandler):
@@ -55,34 +114,44 @@ class H(BaseHTTPRequestHandler):
         self._send(405, 'text/plain; charset=utf-8', b'read-only')
 
     def _state(self):
-        for candidate in (STATE, FIXTURE):
-            if os.path.exists(candidate):
-                try:
-                    with open(candidate, 'rb') as f:
-                        body = f.read()
-                    # annota se stiamo servendo la fixture
-                    if candidate == FIXTURE:
-                        try:
-                            data = json.loads(body.decode('utf-8'))
-                            data['_served_from'] = 'fixture'
-                            body = json.dumps(data, ensure_ascii=False).encode('utf-8')
-                        except Exception:
-                            pass
-                    self._send(200, 'application/json; charset=utf-8', body)
-                    return
-                except Exception as e:
-                    self._send(
-                        200,
-                        'application/json; charset=utf-8',
-                        json.dumps({'error': str(e)}).encode('utf-8'),
-                    )
-                    return
+        if os.path.exists(STATE):
+            try:
+                with open(STATE, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                data = _annotate(data, served_from='cache')
+                body = json.dumps(data, ensure_ascii=False).encode('utf-8')
+                self._send(200, 'application/json; charset=utf-8', body)
+                return
+            except Exception as e:
+                self._send(
+                    200,
+                    'application/json; charset=utf-8',
+                    json.dumps({'error': str(e)}).encode('utf-8'),
+                )
+                return
+        if os.path.exists(FIXTURE):
+            try:
+                with open(FIXTURE, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                data = _annotate(data, served_from='fixture')
+                body = json.dumps(data, ensure_ascii=False).encode('utf-8')
+                self._send(200, 'application/json; charset=utf-8', body)
+                return
+            except Exception as e:
+                self._send(
+                    200,
+                    'application/json; charset=utf-8',
+                    json.dumps({'error': str(e)}).encode('utf-8'),
+                )
+                return
         self._send(
             200,
             'application/json; charset=utf-8',
             json.dumps({
                 'empty': True,
                 'note': 'Nessun bubble_state.json — esegui python -m engine.run_engine',
+                '_project': PROJECT,
+                '_repo_root': ROOT,
             }).encode('utf-8'),
         )
 
@@ -113,7 +182,10 @@ class H(BaseHTTPRequestHandler):
 
 if __name__ == '__main__':
     print(
-        f'bubble-monitor web su :{PORT} (read-only) — {HTML}',
+        f'{PROJECT} web su :{PORT} (read-only)\n'
+        f'  ROOT  = {ROOT}\n'
+        f'  STATE = {STATE}\n'
+        f'  Apri SOLO questa cartella — non SP500-bubble-monitor (vecchia, dati stale)',
         flush=True,
     )
     ThreadingHTTPServer(('0.0.0.0', PORT), H).serve_forever()

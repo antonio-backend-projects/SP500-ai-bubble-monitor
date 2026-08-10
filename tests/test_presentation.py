@@ -43,6 +43,23 @@ def test_alert_late_bubble_amber():
     assert alert['urgency'] >= 50
 
 
+def test_alert_not_green_when_valuations_extreme_but_margin_proxy_flat():
+    """Caso reale: CAPE/Buffett/famiglie alti, margin Z.1 YoY basso → NON rischio contenuto."""
+    ind = _late_bubble()
+    ind['cape'] = 42.4
+    ind['buffett_pct'] = 219.0
+    ind['household_equity_pct'] = 45.8
+    ind['mag7_weight_pct'] = 30.8
+    ind['margin_debt_yoy_pct'] = 2.1
+    ind['margin_debit_billion'] = 622.0
+    ind['margin_source'] = 'FRED Z.1 BOGZ1FL663067003Q (margin loans proxy)'
+    scores = build_scores(ind)
+    alert = build_alert(scores)
+    assert alert['level'] in ('amber', 'red')
+    assert 'CONTENUTO' not in alert['headline']
+    assert scores['fragility_score'] >= 70.0
+
+
 def test_alert_burst_red():
     ind = _late_bubble()
     ind['hy_oas_bp'] = 520.0

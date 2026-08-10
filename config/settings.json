@@ -21,15 +21,16 @@
     "mag7_weight_pct": {"elevated": 25.0, "extreme": 33.0},
     "hy_oas_bp": {"complacent": 350.0, "stress": 500.0},
     "recession_prob_pct": {"amber": 25.0, "red": 40.0},
-    "margin_debt_yoy_pct": {"elevated": 20.0, "extreme": 40.0}
+    "margin_debt_yoy_pct": {"elevated": 20.0, "extreme": 40.0},
+    "margin_debt_billion": {"elevated": 800.0, "extreme": 1400.0}
   },
   "weights": {
     "fragility": {
-      "cape": 0.22,
-      "buffett": 0.18,
-      "household_equity": 0.15,
+      "cape": 0.25,
+      "buffett": 0.22,
+      "household_equity": 0.18,
       "concentration": 0.20,
-      "margin_debt": 0.25
+      "margin_debt": 0.15
     },
     "trigger": {
       "hy_oas": 0.35,

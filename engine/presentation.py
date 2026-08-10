@@ -36,6 +36,17 @@ def build_alert(scores: dict[str, Any]) -> dict[str, Any]:
     trig = float(scores.get('trigger_score') or 0)
     prox = float(scores.get('bubble_proximity') or 0)
     regime = scores.get('regime') or ''
+    parts_f = (scores.get('parts') or {}).get('fragility') or {}
+    parts_t = (scores.get('parts') or {}).get('trigger') or {}
+
+    # Quorum: Buffett/CAPE/famiglie estremi → almeno tarda bolla se innesco spento
+    extreme_val = sum(
+        1
+        for key in ('cape', 'buffett', 'household_equity')
+        if float(parts_f.get(key) or 0) >= 75.0
+    )
+    if extreme_val >= 2 and frag < 70 and trig < 40:
+        frag = max(frag, 72.0)
 
     if frag >= 70 and trig >= 55:
         level = 'red'
@@ -68,8 +79,6 @@ def build_alert(scores: dict[str, Any]) -> dict[str, Any]:
         summary = 'Nessun allarme bolla imminente dai proxy attuali.'
 
     flashing = []
-    parts_f = (scores.get('parts') or {}).get('fragility') or {}
-    parts_t = (scores.get('parts') or {}).get('trigger') or {}
     for name, sc in {**parts_f, **parts_t}.items():
         if sc is not None and sc >= 70:
             flashing.append(name)
@@ -147,7 +156,16 @@ def build_cards(indicators: dict[str, Any], scores: dict[str, Any]) -> list[dict
             indicators.get('margin_debt_yoy_pct'), '% YoY',
             pf.get('margin_debt'),
             'Leva speculativa. I picchi di margin debt hanno anticipato i massimi del 2000, 2007, 2021.',
-            f"Livello: ${indicators.get('margin_debit_billion')}B",
+            (
+                f"Livello: ${indicators.get('margin_debit_billion')}B · "
+                f"{indicators.get('margin_source') or 'n/d'}"
+                + (
+                    ' · ATTENZIONE: proxy Z.1 ≠ debit FINRA del piano'
+                    if 'z.1' in str(indicators.get('margin_source') or '').lower()
+                    or 'proxy' in str(indicators.get('margin_source') or '').lower()
+                    else ''
+                )
+            ),
         ),
         card(
             'hy_oas', 'HY credit spread', 'trigger',

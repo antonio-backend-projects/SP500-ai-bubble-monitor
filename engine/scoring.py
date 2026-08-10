@@ -85,6 +85,41 @@ def score_margin(yoy_pct: Optional[float], thresholds: dict) -> float:
     return round(_lerp_score(yoy_pct, elevated, extreme + 15.0), 1)
 
 
+def score_margin_level(billion: Optional[float], thresholds: dict) -> float:
+    """Livello debit/proxy in $B (scala FINRA-like; su Z.1 è solo indicativo)."""
+    elevated = float(thresholds.get('elevated', 800.0))
+    extreme = float(thresholds.get('extreme', 1400.0))
+    return round(_lerp_score(billion, elevated * 0.55, extreme), 1)
+
+
+def score_margin_combined(
+    yoy_pct: Optional[float],
+    billion: Optional[float],
+    *,
+    yoy_thr: dict,
+    level_thr: dict,
+    source: str = '',
+) -> float:
+    """
+    Blend YoY + livello.
+    Se la fonte è proxy Z.1 (≠ FINRA), il YoY basso non deve azzerare tutto:
+    peso minore sul YoY e tetto sul contributo del pezzo.
+    """
+    yoy_s = score_margin(yoy_pct, yoy_thr)
+    lvl_s = score_margin_level(billion, level_thr)
+    src = (source or '').lower()
+    is_proxy = 'z.1' in src or 'proxy' in src or 'bogz1' in src
+    if is_proxy:
+        # Z.1: privilegia il max tra YoY e livello (scala diversa da FINRA)
+        return round(max(yoy_s, lvl_s * 0.85), 1)
+    return round(0.65 * yoy_s + 0.35 * lvl_s, 1)
+
+
+def _is_margin_proxy(source: str = '') -> bool:
+    src = (source or '').lower()
+    return 'z.1' in src or 'proxy' in src or 'bogz1' in src
+
+
 def score_hy_oas(bp: Optional[float], thresholds: dict) -> float:
     """OAS alto = stress credito = innesco più probabile."""
     complacent = float(thresholds.get('complacent', 350.0))
@@ -169,6 +204,7 @@ def build_scores(indicators: dict[str, Any]) -> dict[str, Any]:
     news = indicators.get('news') or {}
     tallies = news.get('tallies') or {}
 
+    margin_source = str(indicators.get('margin_source') or '')
     frag_parts = {
         'cape': score_cape(indicators.get('cape'), thresholds.get('cape', {})),
         'buffett': score_buffett(indicators.get('buffett_pct'), thresholds.get('buffett_pct', {})),
@@ -180,9 +216,12 @@ def build_scores(indicators: dict[str, Any]) -> dict[str, Any]:
             indicators.get('mag7_weight_pct'),
             thresholds.get('mag7_weight_pct', {}),
         ),
-        'margin_debt': score_margin(
+        'margin_debt': score_margin_combined(
             indicators.get('margin_debt_yoy_pct'),
-            thresholds.get('margin_debt_yoy_pct', {}),
+            indicators.get('margin_debit_billion'),
+            yoy_thr=thresholds.get('margin_debt_yoy_pct', {}),
+            level_thr=thresholds.get('margin_debt_billion', {}),
+            source=margin_source,
         ),
     }
 
@@ -200,13 +239,27 @@ def build_scores(indicators: dict[str, Any]) -> dict[str, Any]:
         'ai_earnings_risk': float(indicators.get('ai_earnings_risk') or 0.0),
     }
 
+    margin_w = float(frag_w.get('margin_debt', 0.15))
+    # Proxy Z.1 non deve dominare la media (metodologia ≠ FINRA debit balances)
+    if _is_margin_proxy(margin_source):
+        margin_w *= 0.45
+
     fragility_score = weighted_mean([
-        (frag_parts['cape'], float(frag_w.get('cape', 0.22))),
-        (frag_parts['buffett'], float(frag_w.get('buffett', 0.18))),
-        (frag_parts['household_equity'], float(frag_w.get('household_equity', 0.15))),
+        (frag_parts['cape'], float(frag_w.get('cape', 0.25))),
+        (frag_parts['buffett'], float(frag_w.get('buffett', 0.22))),
+        (frag_parts['household_equity'], float(frag_w.get('household_equity', 0.18))),
         (frag_parts['concentration'], float(frag_w.get('concentration', 0.20))),
-        (frag_parts['margin_debt'], float(frag_w.get('margin_debt', 0.25))),
+        (frag_parts['margin_debt'], margin_w),
     ])
+
+    # Quorum valutazioni estreme: non lasciare un pezzo debole abbassare sotto "tarda bolla"
+    extreme_bits = sum(
+        1
+        for key in ('cape', 'buffett', 'household_equity')
+        if float(frag_parts.get(key) or 0) >= 75.0
+    )
+    if extreme_bits >= 2:
+        fragility_score = max(fragility_score, 72.0)
 
     trigger_score = weighted_mean([
         (trig_parts['hy_oas'], float(trig_w.get('hy_oas', 0.35))),

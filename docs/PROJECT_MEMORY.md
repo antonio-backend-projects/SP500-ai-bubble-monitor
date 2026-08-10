@@ -3,7 +3,7 @@
 **Scopo di questo file:** handoff completo per umani e agent Cursor.  
 Se apri questo repo in una chat nuova, **leggi prima questo file**, poi `evolutive/README.md`.
 
-Ultimo aggiornamento memoria: **2026-08-09** (migrazione da cartella di test `SP500-bubble-monitor`).
+Ultimo aggiornamento memoria: **2026-08-10** — fix CAPE stale→multpl, scoring margin proxy, quorum alert tarda-bolla.
 
 ---
 
@@ -95,11 +95,10 @@ Flusso: **engine → `bubble_state.json` → dashboard poll ogni 60s**.
 | MarketWatch / Stooq HTML | anti-bot |
 | Engine live ripetuto dal PC Windows | rischio ban (stesso problema Gamtrace/Yahoo) |
 
-### Margin — attenzione
-- Piano cita FINRA debit ~$1.53T / +51.5% YoY.
-- In codice: priorità **FRED Z.1** `BOGZ1FL663067003Q` (margin loans proxy) → poi FINRA scrape → seed.
-- Proxy Z.1 **≠** FINRA: YoY può essere ~2% con livello ~$622B → **score margin 0** e tira giù la fragilità media.
-- Seed margin aveva YoY 51.5 → score alto → banner TARDA BOLLA (fuorviante se preso come “live”).
+### Margin
+- Priorità (2026-08-10): **FINRA.org tabella ufficiale** → mirror CSV thetrading.tools → FRED Z.1 proxy → seed.
+- Piano: FINRA debit ~$1.50–1.53T, YoY ~49–51%. XLS diretto FINRA spesso 403; la **pagina HTML** e il **CSV mirror** rispondono 200.
+- FRED Z.1 resta solo fallback (metodologia diversa, ~$622B).
 
 ### CAPE — attenzione
 - Seed piano: **41.9**.
@@ -119,18 +118,11 @@ Flusso: **engine → `bubble_state.json` → dashboard poll ogni 60s**.
 - `frag ≥ 55` → VIGILANZA
 - sotto → **RISCHIO CONTENUTO** (green)
 
-### Perché il banner è passato da TARDA BOLLA a RISCHIO CONTENUTO
-Non è il mercato: è il mix dati.
-
-| | Prima (seed) | Dopo (live) |
-|--|--------------|-------------|
-| CAPE | ~41.9 → score ~92 | ~33.3 stale → ~62 |
-| Margin YoY | seed 51.5 → score ~90 | Z.1 2.1 → **0** |
-| Peso margin | **0.25** (il più alto) | stesso |
-| Fragilità media | ~80 → TARDA BOLLA | ~51 → RISCHIO CONTENUTO |
-| Buffett / famiglie | alti | ancora alti (~219%, ~45.8%) |
-
-**Fix desiderato (in evolutive/05 e 13):** quorum pezzi estremi; meno peso margin se proxy Z.1; CAPE stale warning; score su livello margin oltre YoY.
+### Fix fatto 2026-08-10
+- CAPE stale Shiller → **multpl live** (~42.4)
+- Margin proxy Z.1: peso ridotto + blend livello/YoY + disclaimer in card
+- Quorum: 2+ tra CAPE/Buffett/household estremi → fragilità almeno 72 → **TARDA BOLLA** se innesco spento
+- Test: `test_alert_not_green_when_valuations_extreme_but_margin_proxy_flat`
 
 ### Pesi fragilità attuali (`settings.json`)
 `cape 0.22`, `buffett 0.18`, `household 0.15`, `concentration 0.20`, `margin_debt 0.25`.
