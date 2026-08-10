@@ -45,6 +45,7 @@ def fetch_mag7_nasdaq(*, force: bool = False) -> dict[str, Any]:
     }
     prices: dict[str, Any] = {}
     changes: dict[str, Any] = {}
+    dist_52w: dict[str, Any] = {}
     blocked = False
 
     for t in mag7:
@@ -63,13 +64,27 @@ def fetch_mag7_nasdaq(*, force: bool = False) -> dict[str, Any]:
                 continue
             data = (resp.json() or {}).get("data") or {}
             primary = data.get("primaryData") or {}
-            px_raw = (primary.get("lastSalePrice") or "").replace("$", "").replace(",", "")
-            chg_raw = (primary.get("percentageChange") or "").replace("%", "").replace("+", "")
+            # preferisci chiusura se pre-market rumoroso
+            secondary = data.get("secondaryData") or {}
+            px_raw = (primary.get("lastSalePrice") or secondary.get("lastSalePrice") or "")
+            px_raw = str(px_raw).replace("$", "").replace(",", "")
+            chg_raw = (primary.get("percentageChange") or secondary.get("percentageChange") or "")
+            chg_raw = str(chg_raw).replace("%", "").replace("+", "")
             prices[t] = float(px_raw) if px_raw else None
             try:
                 changes[t] = float(chg_raw) if chg_raw else None
             except ValueError:
                 changes[t] = None
+            # 52w range: "216.58 - 344.57"
+            rng = ((data.get("keyStats") or {}).get("fiftyTwoWeekHighLow") or {}).get("value") or ""
+            if prices[t] is not None and " - " in str(rng):
+                try:
+                    lo_s, hi_s = str(rng).split(" - ", 1)
+                    hi = float(hi_s.replace(",", "").strip())
+                    if hi > 0:
+                        dist_52w[t] = round((float(prices[t]) / hi - 1.0) * 100.0, 2)
+                except (TypeError, ValueError):
+                    pass
         except Exception as e:
             logger.warning("NASDAQ %s fallito: %s", t, e)
             time.sleep(0.5)
@@ -81,10 +96,13 @@ def fetch_mag7_nasdaq(*, force: bool = False) -> dict[str, Any]:
             return cached
 
     neg = [v for v in changes.values() if v is not None and v < 0]
+    dvals = [v for v in dist_52w.values() if v is not None]
     payload = {
         "mag7": mag7,
         "prices": prices,
         "changes_pct": changes,
+        "dist_52w_high_pct": dist_52w,
+        "mag7_avg_dist_52w_high_pct": round(sum(dvals) / len(dvals), 2) if dvals else None,
         "avg_change_pct": round(sum(changes[k] for k in changes if changes[k] is not None) / max(1, len([c for c in changes.values() if c is not None])), 2)
         if any(c is not None for c in changes.values())
         else None,

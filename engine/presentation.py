@@ -135,7 +135,12 @@ def build_cards(indicators: dict[str, Any], scores: dict[str, Any]) -> list[dict
             indicators.get('buffett_pct'), '%',
             pf.get('buffett'),
             'Capitalizzazione azionaria USA vs PIL. Sopra 200% Buffett diceva "giocare col fuoco".',
-            f"Fuoco {thr.get('buffett_pct', {}).get('fire', 200)}% · estremo {thr.get('buffett_pct', {}).get('extreme', 230)}%",
+            (
+                f"Fuoco {thr.get('buffett_pct', {}).get('fire', 200)}% · "
+                f"estremo {thr.get('buffett_pct', {}).get('extreme', 230)}% · "
+                f"fonte {indicators.get('buffett_source') or 'n/d'} "
+                f"(piano ~234% altra metodologia)"
+            ),
         ),
         card(
             'household', 'Equity famiglie USA', 'fragility',
@@ -200,7 +205,11 @@ def build_cards(indicators: dict[str, Any], scores: dict[str, Any]) -> list[dict
             indicators.get('ai_earnings_risk'), '/100',
             pt.get('ai_earnings_risk'),
             'Delusioni su capex/earnings Mag7: terzo innesco del piano, il più specifico della bolla AI.',
-            'Da news + keyword earnings/AI',
+            (
+                f"EPS surprise medio Mag7: {indicators.get('mag7_avg_eps_surprise_pct')}% · "
+                f"miss: {indicators.get('mag7_eps_miss_count')} · "
+                f"{indicators.get('mag7_earnings_source') or 'n/d'}"
+            ),
         ),
         card(
             'under', 'Stress concentrazione', 'fragility',

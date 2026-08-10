@@ -11,10 +11,11 @@ Il piano sottolinea: indice ai massimi ≠ mercato sano sotto.
 ## Gap forti (citati nel piano, non in dash)
 
 ### Breadth / drawdown titoli
-- [ ] **Drawdown medio dei singoli titoli S&P** YTD (piano: ~−21%)
+- [x] **Proxy drawdown medio** su campione top-N (NASDAQ 52w) — fatto 2026-08-10
+- [x] **Equal-weight vs cap-weight**: RSP vs SPY YTD — fatto
+- [ ] Drawdown medio letterale su tutti i 500 (serve vendor/breadth feed)
 - [ ] % titoli sotto MA50 / MA200
 - [ ] Advance/decline line o new high – new low
-- [ ] Median stock vs SPX performance (equal-weight vs cap-weight)
 
 ### Mag7 “sotto”
 - [ ] Drawdown da picco per ciascun Mag7

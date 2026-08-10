@@ -19,6 +19,8 @@ load_env()
 from data.ingestion.finra_margin import fetch_margin_debt
 from data.ingestion.fred import fetch_fred_bundle
 from data.ingestion.http_utils import CACHE_DIR, load_json_cache, save_json_cache
+from data.ingestion.mag7_earnings import fetch_mag7_earnings
+from data.ingestion.market_breadth import fetch_market_breadth
 from data.ingestion.market_drawdown import fetch_spx_drawdown
 from data.ingestion.nasdaq_quotes import fetch_mag7_nasdaq
 from data.ingestion.news_feed import fetch_news_digest
@@ -65,24 +67,32 @@ def main(*, force: bool = False) -> dict[str, Any]:
     weights = _safe_fetch(fetch_sp500_weights, 'sp500_weights', force=force, label='Slickcharts')
     mag7 = _safe_fetch(fetch_mag7_snapshot, 'mag7_snapshot', force=force, label='Mag7 Yahoo')
     nasdaq = _safe_fetch(fetch_mag7_nasdaq, 'mag7_nasdaq', force=force, label='Mag7 NASDAQ')
+    earnings = _safe_fetch(fetch_mag7_earnings, 'mag7_earnings', force=force, label='Mag7 EPS')
     drawdown = _safe_fetch(fetch_spx_drawdown, 'spx_drawdown', force=force, label='SPX FRED')
     filings = _safe_fetch(fetch_mag7_8k, 'sec_mag7_8k', force=force, label='SEC 8-K')
     recession = _safe_fetch(fetch_recession_prob, 'nyfed_recession', force=force, label='NY Fed')
     news = _safe_fetch(fetch_news_digest, 'news_digest', force=force, label='News RSS')
+
+    def _breadth(**kwargs):
+        return fetch_market_breadth(
+            force=force,
+            constituents=weights.get('constituents_sample') or weights.get('top10') or [],
+        )
+
+    breadth = _safe_fetch(_breadth, 'market_breadth', force=force, label='Breadth SPY/RSP')
+
+    filings_for_under = dict(filings)
+    filings_for_under['earnings_bundle'] = earnings
 
     under = build_under_surface(
         weights=weights,
         news=news,
         drawdown=drawdown,
         nasdaq=nasdaq,
-        filings=filings,
+        filings=filings_for_under,
+        breadth=breadth,
         force=True,
     )
-
-    # Arricchisci rischio utili AI con filings SEC se presenti
-    if filings.get('ai_filings_risk') is not None:
-        news = dict(news)
-        # non sovrascrive news_risk, ma indicators userà filings via under_surface
 
     indicators = assemble_indicators(
         fred_bundle, cape, margin, mag7, news,
@@ -90,13 +100,24 @@ def main(*, force: bool = False) -> dict[str, Any]:
         weights=weights,
         under_surface=under,
     )
-    # blend AI earnings risk with SEC filings
-    if filings.get('ai_filings_risk') is not None:
-        base = float(indicators.get('ai_earnings_risk') or 0)
-        indicators['ai_earnings_risk'] = round(
-            min(100.0, 0.6 * base + 0.4 * float(filings['ai_filings_risk'])),
-            1,
-        )
+    # Blend rischio utili AI: news keyword + NASDAQ EPS surprise + SEC 8-K
+    base = float(indicators.get('ai_earnings_risk') or 0)
+    eps_r = earnings.get('ai_earnings_risk')
+    sec_r = filings.get('ai_filings_risk')
+    parts = [(base, 0.25)]
+    if eps_r is not None:
+        parts.append((float(eps_r), 0.55))
+    if sec_r is not None:
+        parts.append((float(sec_r), 0.20))
+    wsum = sum(w for _, w in parts) or 1.0
+    indicators['ai_earnings_risk'] = round(
+        min(100.0, sum(v * w for v, w in parts) / wsum),
+        1,
+    )
+    indicators['mag7_avg_eps_surprise_pct'] = earnings.get('avg_surprise_pct')
+    indicators['mag7_eps_miss_count'] = earnings.get('miss_count')
+    indicators['mag7_earnings_source'] = earnings.get('source')
+    indicators['mag7_avg_dist_52w_high_pct'] = under.get('mag7_avg_dist_52w_high_pct')
 
     scores = build_scores(indicators)
     presentation = enrich_state(
@@ -127,8 +148,16 @@ def main(*, force: bool = False) -> dict[str, Any]:
             'drawdown_source': drawdown.get('source'),
             'nasdaq_source': nasdaq.get('source'),
             'sec_source': filings.get('source'),
+            'earnings_source': earnings.get('source'),
+            'breadth_source': breadth.get('source'),
             'news_items': len((news.get('items') or [])),
+            'news_tagged': news.get('tagged_count'),
+            'news_score': news.get('news_risk_score'),
             'under_surface_source': under.get('source'),
+            'buffett_note': (
+                'CMV ~219% (metodologia Wilshire/GDP CMV). '
+                'Il piano cita ~234% da altre stime — direzione uguale, livello diverso.'
+            ),
         },
     }
 

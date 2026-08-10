@@ -17,6 +17,7 @@ def build_under_surface(
     drawdown: dict[str, Any] | None = None,
     nasdaq: dict[str, Any] | None = None,
     filings: dict[str, Any] | None = None,
+    breadth: dict[str, Any] | None = None,
     force: bool = False,
 ) -> dict[str, Any]:
     cache_name = "under_surface"
@@ -28,6 +29,7 @@ def build_under_surface(
     drawdown = drawdown or {}
     nasdaq = nasdaq or {}
     filings = filings or {}
+    breadth = breadth or {}
     mag7 = weights.get("mag7_weight_pct")
     top10 = weights.get("top10_weight_pct")
     top = weights.get("top10") or []
@@ -54,10 +56,21 @@ def build_under_surface(
     changes = nasdaq.get("changes_pct") or {}
     mag7_avg = nasdaq.get("avg_change_pct")
     losers = nasdaq.get("losers")
+    mag7_avg_dd = nasdaq.get("mag7_avg_dist_52w_high_pct")
+    mag7_dd_map = nasdaq.get("dist_52w_high_pct") or {}
 
     tallies = news.get("tallies") or {}
-    rotation_hits = int(tallies.get("ai_earnings", 0)) + int(tallies.get("recession", 0))
+    rotation_hits = (
+        int(tallies.get("ai_earnings", 0))
+        + int(tallies.get("recession", 0))
+        + int(tallies.get("fed_hawkish", 0))
+    )
     filings_risk = filings.get("ai_filings_risk")
+    earnings = (filings.get("earnings_bundle") or {}) if isinstance(filings, dict) else {}
+
+    breadth_proxy_note = breadth.get("note") or (
+        "Proxy: campione top-N + RSP vs SPY (non drawdown di tutti i 500)"
+    )
 
     payload = {
         "mag7_weight_pct": mag7,
@@ -76,9 +89,22 @@ def build_under_surface(
         "mag7_changes_pct": changes,
         "mag7_avg_change_pct": mag7_avg,
         "mag7_losers": losers,
+        "mag7_dist_52w_high_pct": mag7_dd_map,
+        "mag7_avg_dist_52w_high_pct": mag7_avg_dd,
+        "spy_ytd_pct": (breadth.get("spy") or {}).get("ytd_pct"),
+        "rsp_ytd_pct": (breadth.get("rsp") or {}).get("ytd_pct"),
+        "spy_rsp_gap_ytd_pct": breadth.get("spy_rsp_gap_ytd_pct"),
+        "sample_avg_dist_52w_high_pct": breadth.get("sample_avg_dist_52w_high_pct"),
+        "sample_pct_names_below_10pct": breadth.get("sample_pct_names_below_10pct"),
+        "sample_n_ok": breadth.get("sample_n_ok"),
+        "breadth_stress_0_100": breadth.get("breadth_stress_0_100"),
+        "breadth_proxy_note": breadth_proxy_note,
         "sec_8k_items": (filings.get("items") or [])[:8],
         "sec_earnings_like_count": filings.get("earnings_like_count"),
         "filings_risk_0_100": filings_risk,
+        "mag7_earnings_rows": (earnings.get("rows") or [])[:7],
+        "mag7_avg_eps_surprise_pct": earnings.get("avg_surprise_pct"),
+        "mag7_eps_miss_count": earnings.get("miss_count"),
         "news_rotation_hits": rotation_hits,
         "updated_at": datetime.now(timezone.utc).isoformat(),
         "source": "+".join(
@@ -86,6 +112,8 @@ def build_under_surface(
                 drawdown.get("source"),
                 nasdaq.get("source"),
                 filings.get("source"),
+                earnings.get("source"),
+                breadth.get("source"),
                 weights.get("source"),
             ] if x
         ) or "composite",

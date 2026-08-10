@@ -3,7 +3,7 @@
 **Scopo di questo file:** handoff completo per umani e agent Cursor.  
 Se apri questo repo in una chat nuova, **leggi prima questo file**, poi `evolutive/README.md`.
 
-Ultimo aggiornamento memoria: **2026-08-10** — fix CAPE stale→multpl, scoring margin proxy, quorum alert tarda-bolla.
+Ultimo aggiornamento memoria: **2026-08-10** — + market breadth: SPY/RSP YTD + campione top-40 dist 52w (NASDAQ), senza Yahoo.
 
 ---
 

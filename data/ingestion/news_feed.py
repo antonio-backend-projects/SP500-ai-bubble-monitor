@@ -21,9 +21,10 @@ from .http_utils import (
 logger = logging.getLogger(__name__)
 
 DEFAULT_FEEDS = [
-    "https://feeds.finance.yahoo.com/rss/2.0/headline?s=%5EGSPC&region=US&lang=en-US",
     "https://www.federalreserve.gov/feeds/press_monetary.xml",
     "https://www.federalreserve.gov/feeds/press_all.xml",
+    "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=10000664",
+    "http://feeds.bbci.co.uk/news/business/rss.xml",
 ]
 
 
@@ -71,17 +72,23 @@ def analyze_news(items: list[dict], keyword_map: dict) -> dict[str, Any]:
         tagged.append(row)
 
     weighted = (
-        tallies.get("fed_hawkish", 0) * 1.4
-        + tallies.get("credit_stress", 0) * 1.6
-        + tallies.get("ai_earnings", 0) * 1.2
-        + tallies.get("recession", 0) * 1.3
+        tallies.get("fed_policy", 0) * 0.35
+        + tallies.get("fed_hawkish", 0) * 1.5
+        + tallies.get("credit_stress", 0) * 1.7
+        + tallies.get("ai_earnings", 0) * 1.3
+        + tallies.get("recession", 0) * 1.4
     )
-    news_score = max(0.0, min(100.0, weighted * 6.0))
+    # Base >0 se ci sono headline Fed/mercato rilevanti; tetto 100
+    news_score = max(0.0, min(100.0, 8.0 + weighted * 5.5)) if tagged else 0.0
+    if tallies.get("fed_policy", 0) == 0 and tallies.get("fed_hawkish", 0) == 0:
+        # niente Fed: non forzare score alto solo per volume feed
+        news_score = max(0.0, min(100.0, weighted * 5.5))
     return {
         "tallies": tallies,
         "total_hits": sum(tallies.values()),
         "news_risk_score": round(news_score, 1),
         "items": tagged,
+        "tagged_count": sum(1 for it in tagged if it.get("tags")),
     }
 
 

@@ -34,7 +34,7 @@ MAG7_CIK = {
 }
 
 
-def fetch_mag7_8k(*, force: bool = False, max_tickers: int = 3) -> dict[str, Any]:
+def fetch_mag7_8k(*, force: bool = False, max_tickers: int = 7) -> dict[str, Any]:
     cache_name = "sec_mag7_8k"
     if not force and is_cache_fresh(cache_name, max_age_hours=24):
         cached = load_json_cache(cache_name)
@@ -75,18 +75,25 @@ def fetch_mag7_8k(*, force: bool = False, max_tickers: int = 3) -> dict[str, Any
                     "link": entry.get("link", ""),
                     "published": entry.get("updated") or entry.get("published") or "",
                     "earnings_like": bool(
-                        re.search(r"result|earning|item\s*2\.02|financial", title, re.I)
+                        re.search(
+                            r"result|earning|item\s*2\.02|financial|press release|"
+                            r"exhibit\s*99|quarterly",
+                            title,
+                            re.I,
+                        )
                     ),
                 })
         except Exception as e:
             logger.warning("SEC %s: %s", t, e)
 
     earnings_hits = sum(1 for it in items if it.get("earnings_like"))
+    # Molti 8-K generici: rischio moderato; spike solo se earnings_like alto
+    base = 12.0 + min(40.0, earnings_hits * 6.0) + min(20.0, len(items) * 1.5)
     payload = {
         "items": items,
         "earnings_like_count": earnings_hits,
         "tickers_scanned": tickers,
-        "ai_filings_risk": min(100.0, 15.0 + earnings_hits * 12.0),
+        "ai_filings_risk": round(min(100.0, base), 1),
         "updated_at": datetime.now(timezone.utc).isoformat(),
         "source": "SEC EDGAR atom 8-K",
     }

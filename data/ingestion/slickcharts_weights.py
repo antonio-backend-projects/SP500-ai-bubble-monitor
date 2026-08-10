@@ -100,7 +100,7 @@ def fetch_sp500_weights(*, force: bool = False) -> dict[str, Any]:
             'top10': top10,
             'top10_weight_pct': top10_weight,
             'mag7_weight_pct': mag7_weight,
-            'constituents_sample': rows[:30],
+            'constituents_sample': rows[:50],
             'updated_at': datetime.now(timezone.utc).isoformat(),
             'source': 'slickcharts.com/sp500',
         }

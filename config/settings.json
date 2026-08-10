@@ -4,6 +4,7 @@
   "rate_limit_max_sec": 8.0,
   "fetch_yahoo_mag7": false,
   "fetch_nasdaq_mag7": true,
+  "breadth_sample_n": 40,
   "mag7": ["AAPL", "MSFT", "NVDA", "AMZN", "GOOGL", "META", "TSLA"],
   "index_proxy": "SPY",
   "fred_series": {
@@ -47,14 +48,32 @@
   },
   "fred_api_key": "",
   "news_feeds": [
-    "https://feeds.finance.yahoo.com/rss/2.0/headline?s=%5EGSPC&region=US&lang=en-US",
     "https://www.federalreserve.gov/feeds/press_monetary.xml",
-    "https://www.federalreserve.gov/feeds/press_all.xml"
+    "https://www.federalreserve.gov/feeds/press_all.xml",
+    "https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=10000664",
+    "http://feeds.bbci.co.uk/news/business/rss.xml"
   ],
   "news_keywords": {
-    "fed_hawkish": ["rate hike", "higher for longer", "restrictive", "inflation", "warsh"],
-    "credit_stress": ["credit spread", "default", "high yield", "crack", "liquidity"],
-    "ai_earnings": ["magnificent", "mag 7", "ai spending", "capex", "nvidia", "earnings miss", "guidance"],
-    "recession": ["recession", "layoff", "unemployment", "soft landing", "hard landing"]
+    "fed_policy": [
+      "federal reserve", "fomc", "federal open market", "monetary policy",
+      "fed funds", "interest rate", "discount rate", "central bank"
+    ],
+    "fed_hawkish": [
+      "rate hike", "hikes", "higher for longer", "restrictive", "hawkish",
+      "tightening", "inflation remains", "warsh"
+    ],
+    "credit_stress": [
+      "credit spread", "default", "high yield", "junk bond", "liquidity crunch",
+      "credit stress", "widening spread"
+    ],
+    "ai_earnings": [
+      "magnificent", "mag 7", "mag7", "ai spending", "ai capex", "capex",
+      "nvidia", "earnings miss", "misses estimates", "cuts guidance", "guidance cut",
+      "revenue miss", "chatgpt", "openai"
+    ],
+    "recession": [
+      "recession", "layoff", "layoffs", "unemployment", "soft landing",
+      "hard landing", "jobless", "contraction"
+    ]
   }
 }
