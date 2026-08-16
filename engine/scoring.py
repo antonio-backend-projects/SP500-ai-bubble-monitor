@@ -1,4 +1,7 @@
-"""Scoring fragilità vs innesco — logica da piano-strategia.md."""
+"""Scoring fragilità vs innesco — logica da piano-strategia.md.
+
+Author: Antonio Trento — https://antoniotrento.net
+"""
 from __future__ import annotations
 
 from typing import Any, Optional

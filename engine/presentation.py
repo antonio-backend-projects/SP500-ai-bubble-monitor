@@ -1,4 +1,7 @@
-"""Trasforma score+indicatori in alert, card leggibili e serie per grafici."""
+"""Trasforma score+indicatori in alert, card leggibili e serie per grafici.
+
+Author: Antonio Trento — https://antoniotrento.net
+"""
 from __future__ import annotations
 
 from typing import Any, Optional

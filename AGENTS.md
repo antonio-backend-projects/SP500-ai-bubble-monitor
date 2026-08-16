@@ -1,6 +1,7 @@
 # AGENTS.md — istruzioni per agent Cursor
 
-Repo: **SP500-ai-bubble-monitor**
+Repo: **SP500-ai-bubble-monitor**  
+Author: **Antonio Trento** — https://antoniotrento.net
 
 ## Prima di qualsiasi modifica
 

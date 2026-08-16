@@ -2,6 +2,8 @@
 
 Docs for **development**, **configuration**, and **ops**. Docker/tunnel are still a target: the contract is written; deploy code is not in the repo yet.
 
+Author: [Antonio Trento](https://antoniotrento.net).
+
 | Doc | Contents |
 |-----|----------|
 | **[PROJECT_MEMORY.md](PROJECT_MEMORY.md)** | Full handoff — read first in every new chat |

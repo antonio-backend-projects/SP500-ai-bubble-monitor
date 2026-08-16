@@ -1,4 +1,7 @@
-"""Assembla indicatori grezzi da cache/download in un unico bundle per lo scoring."""
+"""Assembla indicatori grezzi da cache/download in un unico bundle per lo scoring.
+
+Author: Antonio Trento — https://antoniotrento.net
+"""
 from __future__ import annotations
 
 from typing import Any, Optional

@@ -1,4 +1,7 @@
-"""HTTP helpers: session, rate limit, cache JSON — stile Gamtrace anti-ban."""
+"""HTTP helpers: session, rate limit, cache JSON — stile Gamtrace anti-ban.
+
+Author: Antonio Trento — https://antoniotrento.net
+"""
 from __future__ import annotations
 
 import json

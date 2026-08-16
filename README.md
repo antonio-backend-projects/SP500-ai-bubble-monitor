@@ -13,6 +13,8 @@ Typical reading from the strategy note: *late bubble — spring coiled, trigger 
 
 **Not financial advice.** Scenario analysis on public data.
 
+**Author:** [Antonio Trento](https://antoniotrento.net) · [Portfolio](https://antoniotrento.net/portfolio/sp500-ai-bubble-monitor/)
+
 ---
 
 ## Quick start
@@ -202,4 +204,4 @@ Until `Dockerfile` / compose exist, a Pi can still run the venv + systemd + cron
 
 ## License
 
-[MIT](LICENSE) © 2026 Antonio Trento. Scenario analysis on public data — **not financial advice**.
+[MIT](LICENSE) © 2026 [Antonio Trento](https://antoniotrento.net). Scenario analysis on public data — **not financial advice**.

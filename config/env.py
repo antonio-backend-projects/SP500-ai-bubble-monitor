@@ -1,4 +1,7 @@
-"""Carica `.env` dalla root del progetto — riusabile per tutte le secret."""
+"""Carica `.env` dalla root del progetto — riusabile per tutte le secret.
+
+Author: Antonio Trento — https://antoniotrento.net
+"""
 from __future__ import annotations
 
 import os

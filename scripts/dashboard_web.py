@@ -8,6 +8,9 @@ Serve:
   /salute        healthcheck
 
 SICUREZZA: solo GET, nessun endpoint che lancia l'engine o scarica dati.
+
+Author: Antonio Trento — https://antoniotrento.net
+License: MIT
 """
 from __future__ import annotations
 
@@ -185,6 +188,7 @@ if __name__ == '__main__':
         f'{PROJECT} web su :{PORT} (read-only)\n'
         f'  ROOT  = {ROOT}\n'
         f'  STATE = {STATE}\n'
+        f'  Author: Antonio Trento — https://antoniotrento.net\n'
         f'  Apri SOLO questa cartella — non SP500-bubble-monitor (vecchia, dati stale)',
         flush=True,
     )

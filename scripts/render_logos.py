@@ -1,4 +1,7 @@
-"""Render the SP500 AI Bubble Monitor mark system (true alpha PNG + SVG)."""
+"""Render the SP500 AI Bubble Monitor mark system (true alpha PNG + SVG).
+
+Author: Antonio Trento — https://antoniotrento.net
+"""
 from __future__ import annotations
 
 import math

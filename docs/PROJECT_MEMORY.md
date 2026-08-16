@@ -11,6 +11,7 @@ Last memory update: **2026-08-16** — technical docs in English (detailed confi
 
 | Field | Value |
 |-------|--------|
+| Author | **Antonio Trento** — [antoniotrento.net](https://antoniotrento.net) |
 | Repo / project name | **SP500-ai-bubble-monitor** |
 | Historical test folder | `SP500-bubble-monitor` (scratch; no longer home) |
 | Current UI brand | `SP500 · Bubble Monitor` (still to align to AI Bubble Monitor) |

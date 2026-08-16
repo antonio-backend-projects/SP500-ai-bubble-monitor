@@ -1,4 +1,9 @@
-"""Pipeline: fetch web/cache → indicatori → scoring → presentation → bubble_state.json."""
+"""
+SP500 AI Bubble Monitor — fetch → score → presentation → bubble_state.json.
+
+Author: Antonio Trento — https://antoniotrento.net
+License: MIT
+"""
 from __future__ import annotations
 
 import json
