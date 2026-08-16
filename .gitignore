@@ -7,5 +7,11 @@ data/cache/*
 config/fred_api_key.txt
 config/.fred_api_key
 .env
+.env.*
+!.env.example
 *.xlsx
+*.xls
+*.bin
 scripts/_probe*.py
+.DS_Store
+Thumbs.db

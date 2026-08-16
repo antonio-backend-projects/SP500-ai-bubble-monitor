@@ -197,3 +197,9 @@ Until `Dockerfile` / compose exist, a Pi can still run the venv + systemd + cron
 - Do not scrape FINRA HTML “just to try”.  
 - Do not add a public “refresh data” control.  
 - Do not loop `run_engine --force` from Windows.
+
+---
+
+## License
+
+[MIT](LICENSE) © 2026 Antonio Trento. Scenario analysis on public data — **not financial advice**.

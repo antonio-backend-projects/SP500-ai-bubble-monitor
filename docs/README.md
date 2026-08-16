@@ -18,7 +18,8 @@ Docs for **development**, **configuration**, and **ops**. Docker/tunnel are stil
 
 Product backlog: [`../evolutive/`](../evolutive/) (Italian).  
 Scenario note: [`../piano-strategia.md`](../piano-strategia.md) (Italian).  
-Root README: [`../README.md`](../README.md).
+Root README: [`../README.md`](../README.md).  
+License: [MIT](../LICENSE).
 
 ## From zero (local)
 
