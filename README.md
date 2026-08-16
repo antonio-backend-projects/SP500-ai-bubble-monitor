@@ -1,4 +1,4 @@
-<p align="center">
+<p align="left">
   <img src="assets/images/logo/lockup-inverse-on-dark.png" alt="SP500 AI Bubble Monitor" width="520">
 </p>
 
