@@ -75,7 +75,7 @@ La UI **non** scarica dati. Solo l’engine, a schedule.
 
 ## 5. Cartella `docs/` tecnica (minuziosa)
 
-Oggi manca: va creata e tenuta al passo col codice.
+Scritta 2026-08-16 (config + ops + runbook). Tenere al passo col codice. Docker/tunnel restano da implementare nel repo.
 
 Struttura proposta:
 
@@ -88,7 +88,7 @@ docs/
   data-sources.md           # ogni fonte: URL, rischio ban, fallback, TTL
   scoring-and-alerts.md     # formule, quorum tarda-bolla, caveat seed
   dashboard.md              # route, API /api/state, guide popup
-  docker.md                 # build, compose, volumi, profili
+  docker-and-production.md  # build, compose, volumi, profili (nome file reale; non docker.md)
   ops-raspberry-pi.md       # deploy, cron, update.sh, troubleshooting
   cloudflare-tunnel.md      # esposizione dominio
   runbook-incidenti.md      # cache corrotta, FRED down, alert verde fuorviante
@@ -97,11 +97,14 @@ docs/
 
 Requisiti di qualità docs:
 
-- [ ] Ogni procedura con comandi **copy-paste** (PowerShell + bash Pi)
-- [ ] Sezione “cosa non fare” (Yahoo live, FINRA scrape, force dal laptop)
-- [ ] Diagramma mermaid del deploy produzione
-- [ ] Checklist go-live (env, tunnel, primo engine, verifica UI)
-- [ ] Link da README root → `docs/` e da `evolutive/` → `docs/` quando esisterà
+- [x] Ogni procedura con comandi **copy-paste** (PowerShell + bash Pi)
+- [x] Sezione “cosa non fare” (Yahoo live, FINRA scrape, force dal laptop)
+- [x] Diagramma mermaid del deploy produzione (`docs/docker-and-production.md`)
+- [x] Checklist go-live (env, tunnel, primo engine, verifica UI)
+- [x] Link da README root → `docs/` e da `evolutive/` → `docs/`
+
+File (2026-08-16): indice, architecture, development, configuration, data-sources, scoring-and-alerts, dashboard, docker-and-production, ops-raspberry-pi, cloudflare-tunnel, runbook-incidenti.  
+**Non fatto:** Docker/compose/script Pi nel codice — i doc descrivono il contratto, non sostituiscono l’implementazione.
 
 ---
 
@@ -110,5 +113,5 @@ Requisiti di qualità docs:
 1. `docker compose up -d` sul Pi → dashboard risponde in LAN  
 2. Cron engine aggiorna `bubble_state.json` senza intervento  
 3. Tunnel Cloudflare → hostname HTTPS pubblico  
-4. `docs/` copre dev + config + ops in modo ripetibile da zero  
+4. `docs/` copre dev + config + ops in modo ripetibile da zero — **docs sì (2026-08-16)**; compose/tunnel codice ancora no  
 5. Repo rinominato / pubblicato come **SP500-ai-bubble-monitor**

@@ -3,7 +3,8 @@
 Allineabile allo stile **Gamtrace**: PC = dev/test offline; Pi = produzione + cron + tunnel.
 
 Vedi anche il requisito produzione completo:  
-→ [13-docker-tunnel-docs-rename.md](13-docker-tunnel-docs-rename.md)
+→ [13-docker-tunnel-docs-rename.md](13-docker-tunnel-docs-rename.md)  
+Docs già scritte: [`docs/ops-raspberry-pi.md`](../docs/ops-raspberry-pi.md), [`docs/cloudflare-tunnel.md`](../docs/cloudflare-tunnel.md), [`docs/docker-and-production.md`](../docs/docker-and-production.md).
 
 ## Gap
 
@@ -23,7 +24,7 @@ Vedi anche il requisito produzione completo:
 ### Dominio + Cloudflare Tunnel
 - [ ] Stesso schema Gamtrace: `cloudflared` → servizio dashboard
 - [ ] Hostname pubblico HTTPS
-- [ ] Token/config fuori git; docs di setup in `docs/cloudflare-tunnel.md`
+- [x] Token/config fuori git; docs di setup in `docs/cloudflare-tunnel.md`
 
 ### Sicurezza
 - [ ] Nessun endpoint che lancia l’engine dal web

@@ -2,6 +2,7 @@
 
 Cartella di backlog per **SP500-ai-bubble-monitor**.  
 Memoria acquisita / handoff: [`docs/PROJECT_MEMORY.md`](../docs/PROJECT_MEMORY.md).  
+Docs tecnici: [`docs/README.md`](../docs/README.md) (config, fonti, scoring, ops, runbook).  
 Ogni file elenca gap, idee e priorità *possibili* — non è un impegno di roadmap.
 
 | File | Tema |
@@ -26,4 +27,4 @@ Ogni file elenca gap, idee e priorità *possibili* — non è un impegno di road
 2. CAPE aggiornato + margin FINRA (o disclaimer forte sul proxy Z.1)  
 3. Under-surface: drawdown medio titoli, market breadth  
 4. News tagging reale + utili Mag7  
-5. Produzione: Docker + cron fetch + Cloudflare Tunnel + `docs/` + rename repo `SP500-ai-bubble-monitor`
+5. Produzione: Docker + cron fetch + Cloudflare Tunnel (docs ops già in `docs/`; manca il codice deploy)

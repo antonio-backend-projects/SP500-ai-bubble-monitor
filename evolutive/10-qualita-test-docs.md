@@ -16,19 +16,19 @@ Dettaglio struttura → [13-docker-tunnel-docs-rename.md](13-docker-tunnel-docs-
 - [ ] Vietare seed silenziosi in produzione (fail soft sì, ma badge obbligatorio)
 - [ ] Pulizia file probe `data/cache/_probe*` dal repo / gitignore
 
-## Docs tecnici (`docs/` — da creare)
-- [ ] `docs/README.md` indice
-- [ ] Architecture, development, configuration
-- [ ] Data sources (anti-ban, fallback, TTL)
-- [ ] Scoring/alerts, dashboard API
-- [ ] Docker, Raspberry Pi ops, Cloudflare tunnel
-- [ ] Runbook incidenti + checklist go-live
-- [ ] Comandi copy-paste PowerShell **e** bash
-- [ ] Sezione “cosa non fare” (fetch aggressivi dal laptop)
+## Docs tecnici (`docs/`)
+- [x] `docs/README.md` indice
+- [x] Architecture, development, configuration
+- [x] Data sources (anti-ban, fallback, TTL)
+- [x] Scoring/alerts, dashboard API
+- [x] Docker (contratto), Raspberry Pi ops, Cloudflare tunnel — **codice deploy ancora no**
+- [x] Runbook incidenti + checklist go-live
+- [x] Comandi copy-paste PowerShell **e** bash
+- [x] Sezione “cosa non fare” (fetch aggressivi dal laptop)
 
 ## Docs repo root
-- [ ] README aggiornato al nome **SP500-ai-bubble-monitor**
-- [ ] Link README → `docs/` e → `evolutive/`
+- [x] README aggiornato al nome **SP500-ai-bubble-monitor**
+- [x] Link README → `docs/` e → `evolutive/`
 - [ ] Changelog umano
 
 ## Config
