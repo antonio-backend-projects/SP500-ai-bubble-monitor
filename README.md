@@ -1,4 +1,6 @@
-# SP500 AI Bubble Monitor
+<p align="center">
+  <img src="assets/images/logo/lockup-inverse-on-dark.png" alt="SP500 AI Bubble Monitor" width="520">
+</p>
 
 A **fragility vs trigger** monitor for the US equity market in the AI-boom regime.
 
